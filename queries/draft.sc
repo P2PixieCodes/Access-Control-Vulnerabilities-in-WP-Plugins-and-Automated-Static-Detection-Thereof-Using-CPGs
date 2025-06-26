@@ -60,6 +60,10 @@ Find every CALL of submit_button that is guaranteed to run during the execution 
 Find every CALL of `is_admin` that is reachable:
     cpg.call.name("is_admin").where(_.cfgPrev)
 
+(WIP) Find an indirect call of `is_admin` (via passing the name to another function call):
+    cpg.literal.code("\"is_admin\"").argumentIn.<???>
+
+
 
 */
 
