@@ -65,6 +65,7 @@ Find every CALL of `is_admin` that is reachable:
 
 /*
 JOERN QUERIES — NOT MINE
+Find methods marked as "external" by joern (i.e. missing a method body):
     cpg.method.filter(node => node.isExternal == true)
 
 */
