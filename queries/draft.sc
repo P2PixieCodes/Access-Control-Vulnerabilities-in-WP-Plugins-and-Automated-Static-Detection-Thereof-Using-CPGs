@@ -61,8 +61,10 @@ Find every CALL of `is_admin` that is reachable:
     cpg.call.name("is_admin").where(_.cfgPrev)
 
 
+*/
 
-NOT MINE
+/*
+JOERN QUERIES — NOT MINE
     cpg.method.filter(node => node.isExternal == true)
 
 */
