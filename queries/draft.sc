@@ -40,6 +40,7 @@ Find every CONTROL_STRUCTURE with multiple BLOCK children:
 Find IF-case of <given IF-type CONTROL_STRUCTURE>:
     <...>.whenTrue
     <...>.filter(_.astChildren.isBlock.size > 1).astChildren.order(2)
+
 Find ELSE-case of <given IF-type CONTROL_STRUCTURE>:
     <...>.whenFalse
     <...>.filter(_.astChildren.isBlock.size > 1).astChildren.order(3)
