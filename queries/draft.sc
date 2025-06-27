@@ -48,7 +48,7 @@ Find ELSE-case of <given IF-type CONTROL_STRUCTURE>:
 Find IF-block for simple `is_admin` check:
     cpg.call.name("is_admin").where(_.conditionIn).astParent.isControlStructure.whenTrue.isBlock
 
-Find the CFG-successor for every CALL of `is_admin` the is the entire CONDITION expression of a CONTROL_STRUCTURE:
+Find the CFG-successor for every CALL of `is_admin` that is the entire CONDITION expression of a CONTROL_STRUCTURE:
     cpg.call.name("is_admin").where(_.conditionIn).and(_.astParent.isControlStructure).cfgNext.where(_.repeat(_.astParent)(_.until(_.astParent.is(cpg.call.name("is_admin").where(_.conditionIn).astParent.isControlStructure.l(0)))).filter(_.order == 2)).p
 
 Find every CALL of `submit_button`:
