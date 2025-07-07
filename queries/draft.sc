@@ -190,4 +190,7 @@ def get_include_require_calls(methods: Iterator[Method]): Iterator[Call] = {
   * @return an `Iterator[Method]` with the corresponding `<global>` file method;
   *         if there is no file with that name, the iterator is empty
   */
-def get_entry_method(file_name: String): Iterator[Method] = cpg.file(main_file_name).namespaceBlock.typeDecl.method
+def get_entry_method(file_name: String): Iterator[Method] = {
+    cpg.file(main_file_name).namespaceBlock.typeDecl.method
+    //cpg.method.fullName(file_name + ":<global>")
+}
