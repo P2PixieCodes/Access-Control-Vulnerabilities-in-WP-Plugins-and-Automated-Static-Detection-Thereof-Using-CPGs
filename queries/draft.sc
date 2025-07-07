@@ -9,8 +9,8 @@ import scala.collection.mutable.ListBuffer
 /* WIP SCALA FILE */
 
 /** Find every CALL of `is_admin`. */
-def findSource = {
-    cpg.call.name("is_admin")
+def findIsAdminCalls = {
+    cpg.call.name("is_admin") // returns Iterator[Call]
     //cpg.method("is_admin").callIn
 }
 
