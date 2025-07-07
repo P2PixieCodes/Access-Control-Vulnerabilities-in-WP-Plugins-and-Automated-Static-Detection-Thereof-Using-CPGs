@@ -101,17 +101,9 @@ def model_abwp_simple_counter = {
     
     //cpg.file.filter(fileNode => importCalls.argument.ast.isLiteral.typeFullName("string").code.exists(_.contains(fileNode.name)))
 
-
-
-
-
-
-
-
-    
-    
-
 }
+
+@main def hello() = println("Hello, World!")
 
 /*
 Joern Queries that I haven't translated to SCALA
