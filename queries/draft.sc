@@ -21,7 +21,7 @@ def findControlStructuresWhoseConditionCalls(callName: String) = {
 }
 
 /** Find every CALL of method `<callName>` that is part of a CONTROL_STRUCTURE condition. */
-def findCallInConditions(callName: String) = {
+def findCallInConditions(callName: String): Iterator[AstNode] = {
     cpg.controlStructure.condition.repeat(_.astChildren)(_.whilst(_.not(_.isCall.name(callName))))
     //cpg.controlStructure.condition.or(_.isCall.name(callName),_.repeat(_.astChildren)(_.until(_.isCall.name(callName))))
 }
