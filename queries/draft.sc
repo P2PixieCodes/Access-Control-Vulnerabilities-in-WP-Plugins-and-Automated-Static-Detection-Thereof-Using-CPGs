@@ -194,3 +194,22 @@ def get_entry_method(file_name: String): Iterator[Method] = {
     cpg.file(main_file_name).namespaceBlock.typeDecl.method
     //cpg.method.fullName(file_name + ":<global>")
 }
+
+/**
+  * Filter the given CALLs for those that are reachable within the method.
+  * 
+  * (Note: this does not check for unreachable code due to always-false conditions)
+  *
+  * @param calls --- an `Iterator[Call]`
+  * @return an `Iterator[Call]` which contains only those nodes that are reachable
+  */
+def is_part_of_containing_methods_execution(calls: Iterator[Call]): Iterator[Call] = {
+    // assumption that we are always working with CALL nodes
+
+    calls.filter(node => 
+        // is part of method CFG
+        node.method.dominates.exists(_.equals(node)) 
+        // add potential other possibilities like this:
+        //|| <condition>
+    )
+}
