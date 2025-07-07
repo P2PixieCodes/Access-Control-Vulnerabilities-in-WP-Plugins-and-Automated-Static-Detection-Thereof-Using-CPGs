@@ -162,7 +162,7 @@ Find methods marked as "external" by joern (i.e. missing a method body):
 
 
 /**
-  * Given a file <global> method, find all includes/requires of the corresponding file
+  * Given a file <global> method, get all includes/requires of the corresponding file.
   *
   * @param methods --- an `Iterator[Method]` which may or may not contain `filename.php:<global>` methods
   * @return an `Iterator[Call]` of `include`/`require` statements corresponding to any `<global>` methods; 
