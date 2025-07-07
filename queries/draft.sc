@@ -159,3 +159,26 @@ Find methods marked as "external" by joern (i.e. missing a method body):
     cpg.method.filter(node => node.isExternal == true)
 
 */
+
+
+/**
+  * Given a file <global> method, find all includes/requires of the corresponding file
+  *
+  * @param methods --- an `Iterator[Method]` which may or may not contain `filename.php:<global>` methods
+  * @return an `Iterator[Call]` of `include`/`require` statements corresponding to any `<global>` methods; 
+  *         if there are no `<global>` methods, the iterator is empty
+  */
+def get_include_require_calls(methods: Iterator[Method]): Iterator[Call] = {
+
+    // we assume that files' global methods are named `filename.php:<global>`
+    def file_methods = methods.filter(_.name.contains("<global>"))
+    
+    val all_file_calls = cpg.call.or(_.name("include"),_.name("include_once"),_.name("require"),_.name("require_once")).l
+
+    // we assume that the entire filename is passed as a string literal to the statement
+    def relevant_file_calls = all_file_calls.iterator.filter(node => global_methods.exists(method_node => node.code.contains(method_nodenode.filename)))
+
+    // TODO: case where the filename/path is dynamically constructed
+    
+    relevant_file_calls
+}
