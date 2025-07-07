@@ -97,7 +97,7 @@ def model_abwp_simple_counter = {
     
     // TODO: filter indirect calls by method name in arguments
     // TODO: filter import calls by file name in arguments IF current method is `"<global>"`
-    if methods.name.
+    //if methods.name then 
     
     //cpg.file.filter(fileNode => importCalls.argument.ast.isLiteral.typeFullName("string").code.exists(_.contains(fileNode.name)))
 
