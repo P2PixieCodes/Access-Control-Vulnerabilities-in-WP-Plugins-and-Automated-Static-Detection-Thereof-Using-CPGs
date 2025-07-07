@@ -213,3 +213,49 @@ def is_part_of_containing_methods_execution(calls: Iterator[Call]): Iterator[Cal
         //|| <condition>
     )
 }
+
+/**
+  * Finds callback uses of the given methods.
+  *
+  * @param methods --- an `Iterator[Method]` with methods which may or may not be passed as callbacks
+  * @return an `Iterator[Call]` which contains method calls that take callbacks for any of the given methods
+  */
+def get_calls_via_callbacks(methods: Iterator[Method]): Iterator[Call] = {
+    // get names to search for (ignore file methods)
+    val method_names = methods.whereNot(_.name("<global>")).name.l
+
+    // (incomplete) list of methods that take callbacks
+    val callback_methods = Map(
+        "add_action" -> 2, 
+        "add_options_page" -> 5
+    )
+
+    val callback_calls_wip = cpg.call.filter(node => callback_methods.keys.exists(_.contains(node.name))).l
+    
+    val callback_calls = cpg.call
+        // get relevant methods
+        .filter(node => callback_methods.keys.exists(_.contains(node.name)))
+        // filter relevant CALLs by identifying relevant METHOD-names in corresponding callbacks
+        .filter(node => node.argument(callback_methods(node.name)) // get callback
+            match { // get method name according to callback type
+    
+                // "classname::methodname" as string (LITERAL) -- only possible for static methods
+                case x if x.isLiteral && x.code.contains("::")
+                    => false // TODO
+                // "methodname" as string (LITERAL)
+                case x if x.isLiteral
+                    => method_names.exists(name => x.code.contains(name))
+                // callback using array()
+                // `x.astChildren.order(3).cast[Call].argument(2)` reveals either object (IDENTIFIER) or (only if method is static) classname (LITERAL) // TODO
+                // `x.astChildren.order(2).cast[Call].argument(2)` reveals method name (LITERAL)
+                case x if x.isBlock
+                    => method_names.exists(name => x.astChildren.order(3).cast[Call].argument(2).next.code.contains(name))
+                // object with `__invoke` method (IDENTIFIER)
+                case x if x.isIdentifier
+                    => false // TODO
+                // unknown type of callback ?
+                case _
+                    => false
+            }
+        )
+}
