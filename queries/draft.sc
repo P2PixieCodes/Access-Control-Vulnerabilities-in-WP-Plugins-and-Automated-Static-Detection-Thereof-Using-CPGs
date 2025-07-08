@@ -1,10 +1,14 @@
 import scala.collection.mutable.ListBuffer
 //import $dep.`io.shiftleft::codepropertygraph:1.7.38`
-//import io.shiftleft.codepropertygraph.generated.*
-//import io.shiftleft.codepropertygraph.generated.nodes.*
-//import io.shiftleft.codepropertygraph.generated.help.*
+import io.shiftleft.codepropertygraph.generated.*
+import io.shiftleft.codepropertygraph.generated.nodes.*
+import io.shiftleft.codepropertygraph.generated.help.*
+import io.shiftleft.codepropertygraph.generated.language.*
+import io.shiftleft.codepropertygraph.generated.accessors.*
 //import $dep.`io.shiftleft::semanticcpg:1.3.522` //https://mvnrepository.com/artifact/io.shiftleft/semanticcpg_3/1.3.522
-//import io.shiftleft.semanticcpg.*
+import io.shiftleft.semanticcpg.*
+import io.shiftleft.semanticcpg.language.*
+//import flatgraph.traversal.*
 
 /* WIP SCALA FILE */
 
@@ -164,21 +168,23 @@ Find methods marked as "external" by joern (i.e. missing a method body):
 /**
   * Given a file <global> method, get all includes/requires of the corresponding file.
   *
+  * @param cpg
+  *     the CPG instance
   * @param methods
   *     an `Iterator[Method]` which may or may not contain `filename.php:<global>` methods
   * @return 
   *     an `Iterator[Call]` of `include`/`require` statements corresponding to any `<global>` methods; 
   *     if there are no `<global>` methods, the iterator is empty
   */
-def get_inclusion_calls(methods: Iterator[Method]): Iterator[Call] = {
+def get_inclusion_calls(cpg: Cpg, methods: Iterator[Method]): Iterator[Call] = {
 
     // we assume that files' global methods are named `filename.php:<global>`
-    def file_methods = methods.filter(_.name.contains("<global>"))
+    val file_methods = methods.filter(_.name.contains("<global>")).l // fsr this has to be a list - if it's an iterator, it doesn't want to work?
     
     val all_file_calls = cpg.call.or(_.name("include"),_.name("include_once"),_.name("require"),_.name("require_once")).l
 
     // we assume that the entire filename is passed as a string literal to the statement
-    def relevant_file_calls = all_file_calls.iterator.filter(node => global_methods.exists(method_node => node.code.contains(method_nodenode.filename)))
+    def relevant_file_calls = all_file_calls.iterator.filter(node => file_methods.iterator.exists(method_node => node.code.contains(method_node.filename)))
 
     // TODO: case where the filename/path is dynamically constructed
     
@@ -188,14 +194,16 @@ def get_inclusion_calls(methods: Iterator[Method]): Iterator[Call] = {
 /**
   * Given a filename, get the file's `<global>` method.
   *
-  * @param main_file_name
+  * @param cpg
+  *     the CPG instance
+  * @param file_name
   *     the given filename as a `String`
   * @return
   *     an `Iterator[Method]` with the corresponding `<global>` file method;
   *     if there is no file with that name, the iterator is empty
   */
-def get_entry_method(file_name: String): Iterator[Method] = {
-    cpg.file(main_file_name).namespaceBlock.typeDecl.method
+def get_entry_method(cpg: Cpg, file_name: String): Iterator[Method] = {
+    cpg.file.name(file_name).namespaceBlock.typeDecl.method
     //cpg.method.fullName(file_name + ":<global>")
 }
 
@@ -212,7 +220,7 @@ def get_entry_method(file_name: String): Iterator[Method] = {
 def is_part_of_containing_methods_execution(nodes: Iterator[? <: AstNode]): Iterator[? <: AstNode] = {
     // assumption that we are always working with CALL nodes
 
-    nodes.filter(node => 
+    nodes.isCfgNode.filter(node => 
         // is part of method CFG
         node.method.dominates.exists(_.equals(node)) 
         // add potential other possibilities like this:
@@ -223,12 +231,14 @@ def is_part_of_containing_methods_execution(nodes: Iterator[? <: AstNode]): Iter
 /**
   * Finds callback uses of the given methods.
   *
+  * @param cpg
+  *     the CPG instance
   * @param methods
   *     an `Iterator[Method]` with methods which may or may not be passed as callbacks
   * @return
   *     an `Iterator[Call]` which contains method calls that take callbacks for any of the given methods
   */
-def get_calls_via_callbacks(methods: Iterator[Method]): Iterator[Call] = {
+def get_calls_via_callbacks(cpg: Cpg, methods: Iterator[Method]): Iterator[Call] = {
     // get names to search for (ignore file methods)
     val method_names = methods.whereNot(_.name("<global>")).name.l
 
@@ -272,12 +282,14 @@ def get_calls_via_callbacks(methods: Iterator[Method]): Iterator[Call] = {
 /**
   * Finds calls of methods which were defined via anonymous function variable assignment.
   *
+  * @param cpg
+  *     the CPG instance
   * @param methods
   *     an `Iterator[Method]` of anonymous functions
   * @return
   *     an `Iterator[Call]` which contains calls to relevant anonymous functions
   */
-def get_calls_via_variable_assignment(methods: Iterator[Method]): Iterator[Call | Nothing] = {
+def get_calls_via_variable_assignment(cpg: Cpg, methods: Iterator[Method]): Iterator[Call | Nothing] = {
     // TODO
     return Iterator()
 }
@@ -285,16 +297,18 @@ def get_calls_via_variable_assignment(methods: Iterator[Method]): Iterator[Call 
 /**
   * Filter the given nodes for those that are part of a condition (for either a control structure or an inline if-statement).
   *
+  * @param cpg
+  *     the CPG instance
   * @param relevant_nodes
   *     an `Iterator[? <: AstNode]`
   * @return
   *     an `Iterator[? <: AstNode]` which contains only those that are part of a condition
   */
-def is_part_of_condition(relevant_nodes: Iterator[? <: AstNode]): Iterator[? <: AstNode] = {
+def is_part_of_condition(cpg: Cpg, relevant_nodes: Iterator[? <: AstNode]): Iterator[? <: AstNode] = {
     val compareSet = relevant_nodes.toSet
 
     cpg.controlStructure.condition.ast.filter(node => compareSet contains node)
-    ++ cpg.call.name("<operator>.conditional").argument(1).filter(node => !node.cfgNext.equals(node.argumentIn)).ast.filter(node => compareSet contains node)
+    ++ cpg.call.name("<operator>.conditional").argument(1).filter(node => !node.cfgNext.equals(node._argumentIn)).ast.filter(node => compareSet contains node)
     // if there are other possibilities
     //++ <query>
 }
