@@ -164,9 +164,11 @@ Find methods marked as "external" by joern (i.e. missing a method body):
 /**
   * Given a file <global> method, get all includes/requires of the corresponding file.
   *
-  * @param methods --- an `Iterator[Method]` which may or may not contain `filename.php:<global>` methods
-  * @return an `Iterator[Call]` of `include`/`require` statements corresponding to any `<global>` methods; 
-  *         if there are no `<global>` methods, the iterator is empty
+  * @param methods
+  *     an `Iterator[Method]` which may or may not contain `filename.php:<global>` methods
+  * @return 
+  *     an `Iterator[Call]` of `include`/`require` statements corresponding to any `<global>` methods; 
+  *     if there are no `<global>` methods, the iterator is empty
   */
 def get_inclusion_calls(methods: Iterator[Method]): Iterator[Call] = {
 
@@ -186,9 +188,11 @@ def get_inclusion_calls(methods: Iterator[Method]): Iterator[Call] = {
 /**
   * Given a filename, get the file's `<global>` method.
   *
-  * @param main_file_name --- the given filename as a `String`
-  * @return an `Iterator[Method]` with the corresponding `<global>` file method;
-  *         if there is no file with that name, the iterator is empty
+  * @param main_file_name
+  *     the given filename as a `String`
+  * @return
+  *     an `Iterator[Method]` with the corresponding `<global>` file method;
+  *     if there is no file with that name, the iterator is empty
   */
 def get_entry_method(file_name: String): Iterator[Method] = {
     cpg.file(main_file_name).namespaceBlock.typeDecl.method
@@ -200,8 +204,10 @@ def get_entry_method(file_name: String): Iterator[Method] = {
   * 
   * (Note: this does not check for unreachable code due to always-false conditions)
   *
-  * @param calls --- an `Iterator[Call]`
-  * @return an `Iterator[Call]` which contains only those nodes that are reachable
+  * @param calls
+  *     an `Iterator[Call]`
+  * @return
+  *     an `Iterator[Call]` which contains only those nodes that are reachable
   */
 def is_part_of_containing_methods_execution(calls: Iterator[Call]): Iterator[Call] = {
     // assumption that we are always working with CALL nodes
@@ -217,8 +223,10 @@ def is_part_of_containing_methods_execution(calls: Iterator[Call]): Iterator[Cal
 /**
   * Finds callback uses of the given methods.
   *
-  * @param methods --- an `Iterator[Method]` with methods which may or may not be passed as callbacks
-  * @return an `Iterator[Call]` which contains method calls that take callbacks for any of the given methods
+  * @param methods
+  *     an `Iterator[Method]` with methods which may or may not be passed as callbacks
+  * @return
+  *     an `Iterator[Call]` which contains method calls that take callbacks for any of the given methods
   */
 def get_calls_via_callbacks(methods: Iterator[Method]): Iterator[Call] = {
     // get names to search for (ignore file methods)
