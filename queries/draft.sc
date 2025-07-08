@@ -200,19 +200,19 @@ def get_entry_method(file_name: String): Iterator[Method] = {
 }
 
 /**
-  * Filter the given CALLs for those that are reachable within the method.
+  * Filter the given nodes for those that are reachable within the method.
   * 
   * (Note: this does not check for unreachable code due to always-false conditions)
   *
-  * @param calls
-  *     an `Iterator[Call]`
+  * @param nodes
+  *     an `Iterator[? <: AstNode]`
   * @return
-  *     an `Iterator[Call]` which contains only those nodes that are reachable
+  *     an `Iterator[? <: AstNode]` which contains only those nodes that are reachable
   */
-def is_part_of_containing_methods_execution(calls: Iterator[Call]): Iterator[Call] = {
+def is_part_of_containing_methods_execution(nodes: Iterator[? <: AstNode]): Iterator[? <: AstNode] = {
     // assumption that we are always working with CALL nodes
 
-    calls.filter(node => 
+    nodes.filter(node => 
         // is part of method CFG
         node.method.dominates.exists(_.equals(node)) 
         // add potential other possibilities like this:
