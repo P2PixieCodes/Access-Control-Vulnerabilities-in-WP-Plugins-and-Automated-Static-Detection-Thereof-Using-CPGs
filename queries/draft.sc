@@ -270,7 +270,7 @@ def get_calls_via_callbacks(methods: Iterator[Method]): Iterator[Call] = {
 }
 
 /**
-  * Filter the given nodes for those that are part of a control structure's condition.
+  * Filter the given nodes for those that are part of a condition (for either a control structure or an inline if-statement).
   *
   * @param relevant_calls
   *     an `Iterator[AstNode]`
@@ -278,5 +278,10 @@ def get_calls_via_callbacks(methods: Iterator[Method]): Iterator[Call] = {
   *     an `Iterator[AstNode]` which contains only those that are part of a condition
   */
 def is_part_of_condition(relevant_calls: Iterator[AstNode]): Iterator[AstNode] = {
-    cpg.controlStructure.condition.ast.filter(node => relevant_calls.toSet contains node)
+    val compareSet = relevant_calls.toSet
+
+    cpg.controlStructure.condition.ast.filter(node => compareSet contains node)
+    ++ cpg.call.name("<operator>.conditional").argument(1).filter(node => !node.cfgNext.equals(node.argumentIn)).ast.filter(node => compareSet contains node)
+    // if there are other possibilities
+    //++ <query>
 }
