@@ -312,3 +312,105 @@ def is_part_of_condition(cpg: Cpg, relevant_nodes: Iterator[? <: AstNode]): Iter
     // if there are other possibilities
     //++ <query>
 }
+
+/**
+  * 
+  *
+  * @param cpg
+  * @param input_consequence_nodes
+  * @param input_cause_nodes
+  * @param callResolver
+  */
+def due_to(cpg: Cpg, input_consequence_nodes: Iterator[? <: AstNode], input_cause_nodes: Iterator[? <: AstNode])(implicit callResolver: ICallResolver): List[(? <: AstNode, ? <: AstNode)] = {
+    val consequence_nodes = input_consequence_nodes.toSet
+    val cause_nodes = input_cause_nodes.toSet
+
+    // save followed steps in List // TODO: come up with better way to store paths
+    val result = ListBuffer.empty[(? <: AstNode,? <: AstNode)]
+    
+    // search backwards from consequence to find a cause (bc less potential branching)
+    var search_set: Set[? <: AstNode] = consequence_nodes
+    while search_set.size > 0 do
+        var new_search_set: Set[? <: AstNode] = Set()
+
+        // search for direct CFG connection: execution of cause node can lead to execution of target node within the same method
+        var found_set: Set[? <: AstNode] = Set()
+        search_set.foreach(x => {
+            x.isCfgNode.dominatedBy.foreach(y => { 
+                if cause_nodes contains y then {
+                    // add "due to" pair to result
+                    var temp = (x,y)
+                    result += temp
+                    // remove node `x` from further searches in current loop
+                    found_set = found_set ++ Set(x) // for some reason, using `+` or `incl` does not work
+                }
+            })
+        })
+
+        // no direct CFG connection -> remaining consequence nodes may be part of *methods* that are called "due to" a cause_node
+        search_set = search_set.iterator.filter(node => !found_set.contains(node)).toSet
+
+        // check: nodes must be reachable within method in order for method call to be relevant
+        search_set = is_part_of_containing_methods_execution(search_set.iterator).toSet
+
+        /*
+        // TEMPORARY ADDITION TO MAKE CLEAR THE CONNECTION BETWEEN THE NODE AND THE METHOD I FIND IT IN
+        search_set.isCfgNode.foreach(node => {
+            if !node.equals(node.method) then {
+                var temp = (node, node.method)
+                result += temp
+            }
+        })
+        */
+
+        // search for all nodes
+        search_set.isCfgNode.method.dedup.foreach(method_node => {
+            method_node match
+                // anonymous function
+                case y if y.name.contains("<lambda>") => { 
+                    new_search_set = new_search_set ++ get_calls_via_variable_assignment(cpg, Iterator.single(y)).toSet
+                    /*
+                    // TEMPORARY ADDITION TO MAKE CLEAR THE CONNECTION BETWEEN THE METHOD AND THE NODE THAT CALLS IT
+                    get_calls_via_variable_assignment(cpg, Iterator.single(y)).toSet.foreach(callnode => {
+                        var temp = (method_node,callnode)
+                        result += temp
+                    })
+                    */ 
+                }
+                // global file function
+                case y if y.name.equals("<global>") => { 
+                    new_search_set = new_search_set ++ get_inclusion_calls(cpg, Iterator.single(y)).toSet 
+                    /*
+                    // TEMPORARY ADDITION TO MAKE CLEAR THE CONNECTION BETWEEN THE METHOD AND THE NODE THAT CALLS IT
+                    get_inclusion_calls(cpg, Iterator.single(y)).toSet.foreach(callnode => {
+                        var temp = (method_node,callnode)
+                        result += temp
+                    })
+                    */
+                }
+                // regular function
+                case y => {
+                    new_search_set = new_search_set 
+                        ++ y.callIn.toSet // regular call -> CPG has `CALL`-edge
+                        ++ get_calls_via_callbacks(cpg, Iterable.single(y)).toSet // via callback
+                    /*
+                    // TEMPORARY ADDITION TO MAKE CLEAR THE CONNECTION BETWEEN THE METHOD AND THE NODE THAT CALLS IT
+                    y.callIn.toSet.foreach(callnode => {
+                        var temp = (method_node,callnode)
+                        result += temp
+                    })
+                    // TEMPORARY ADDITION TO MAKE CLEAR THE CONNECTION BETWEEN THE METHOD AND THE NODE THAT CALLS IT
+                    get_calls_via_callbacks(cpg, Iterable.single(y)).toSet.foreach(callnode => {
+                        var temp = (method_node,callnode)
+                        result += temp
+                    })
+                    */
+                }
+        })
+
+        // prepare for next loop
+        search_set = new_search_set
+
+    result.to(List)
+
+}
