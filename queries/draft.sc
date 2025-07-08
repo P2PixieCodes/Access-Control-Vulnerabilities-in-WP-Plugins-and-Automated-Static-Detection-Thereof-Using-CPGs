@@ -270,6 +270,18 @@ def get_calls_via_callbacks(methods: Iterator[Method]): Iterator[Call] = {
 }
 
 /**
+  * Finds calls of methods which were defined via anonymous function variable assignment.
+  *
+  * @param methods
+  *     an `Iterator[Method]` of anonymous functions
+  * @return
+  *     an `Iterator[Call]` which contains calls to relevant anonymous functions
+  */
+def get_calls_via_variable_assignment(methods: Iterator[Method]): Iterator[Call] = {
+    // TODO
+}
+
+/**
   * Filter the given nodes for those that are part of a condition (for either a control structure or an inline if-statement).
   *
   * @param relevant_calls
