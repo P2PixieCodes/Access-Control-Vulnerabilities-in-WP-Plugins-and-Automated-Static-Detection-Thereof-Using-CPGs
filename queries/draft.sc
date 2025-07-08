@@ -168,7 +168,7 @@ Find methods marked as "external" by joern (i.e. missing a method body):
   * @return an `Iterator[Call]` of `include`/`require` statements corresponding to any `<global>` methods; 
   *         if there are no `<global>` methods, the iterator is empty
   */
-def get_include_require_calls(methods: Iterator[Method]): Iterator[Call] = {
+def get_inclusion_calls(methods: Iterator[Method]): Iterator[Call] = {
 
     // we assume that files' global methods are named `filename.php:<global>`
     def file_methods = methods.filter(_.name.contains("<global>"))
@@ -259,3 +259,5 @@ def get_calls_via_callbacks(methods: Iterator[Method]): Iterator[Call] = {
             }
         )
 }
+
+def 
