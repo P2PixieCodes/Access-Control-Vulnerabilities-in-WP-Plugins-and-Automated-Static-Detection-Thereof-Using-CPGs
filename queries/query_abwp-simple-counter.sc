@@ -1,3 +1,12 @@
+import scala.collection.mutable.ListBuffer
+import io.shiftleft.codepropertygraph.generated.*
+import io.shiftleft.codepropertygraph.generated.nodes.*
+import io.shiftleft.codepropertygraph.generated.help.*
+import io.shiftleft.codepropertygraph.generated.language.*
+import io.shiftleft.codepropertygraph.generated.accessors.*
+import io.shiftleft.semanticcpg.*
+import io.shiftleft.semanticcpg.language.*
+import flatgraph.traversal.*
 
 /* COPIED FROM draft.sc */
 
