@@ -258,6 +258,7 @@ def get_calls_via_callbacks(methods: Iterator[Method]): Iterator[Call] = {
                     => false
             }
         )
+    callback_calls
 }
 
 def 
