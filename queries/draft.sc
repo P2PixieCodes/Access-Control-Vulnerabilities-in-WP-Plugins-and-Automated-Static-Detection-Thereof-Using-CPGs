@@ -284,13 +284,13 @@ def get_calls_via_variable_assignment(methods: Iterator[Method]): Iterator[Call]
 /**
   * Filter the given nodes for those that are part of a condition (for either a control structure or an inline if-statement).
   *
-  * @param relevant_calls
-  *     an `Iterator[AstNode]`
+  * @param relevant_nodes
+  *     an `Iterator[? <: AstNode]`
   * @return
-  *     an `Iterator[AstNode]` which contains only those that are part of a condition
+  *     an `Iterator[? <: AstNode]` which contains only those that are part of a condition
   */
-def is_part_of_condition(relevant_calls: Iterator[AstNode]): Iterator[AstNode] = {
-    val compareSet = relevant_calls.toSet
+def is_part_of_condition(relevant_nodes: Iterator[? <: AstNode]): Iterator[? <: AstNode] = {
+    val compareSet = relevant_nodes.toSet
 
     cpg.controlStructure.condition.ast.filter(node => compareSet contains node)
     ++ cpg.call.name("<operator>.conditional").argument(1).filter(node => !node.cfgNext.equals(node.argumentIn)).ast.filter(node => compareSet contains node)
