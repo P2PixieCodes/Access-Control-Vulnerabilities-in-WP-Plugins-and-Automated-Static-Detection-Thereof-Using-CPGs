@@ -277,8 +277,9 @@ def get_calls_via_callbacks(methods: Iterator[Method]): Iterator[Call] = {
   * @return
   *     an `Iterator[Call]` which contains calls to relevant anonymous functions
   */
-def get_calls_via_variable_assignment(methods: Iterator[Method]): Iterator[Call] = {
+def get_calls_via_variable_assignment(methods: Iterator[Method]): Iterator[Call | Nothing] = {
     // TODO
+    return Iterator()
 }
 
 /**
