@@ -11,38 +11,26 @@ import io.shiftleft.semanticcpg.language.*
 /* WIP SCALA FILE */
 
 /** Find every CALL of `is_admin`. */
-def findIsAdminCalls = {
-    cpg.call.name("is_admin") // returns Iterator[Call]
-    //cpg.method("is_admin").callIn
-}
+def findIsAdminCalls = cpg.call.name("is_admin") // returns Iterator[Call]
+//cpg.method("is_admin").callIn
 
 /** Find every CONTROL_STRUCTURE that calls the method `<callName>` in its condition. */
-def findControlStructuresWhoseConditionCalls(callName: String) = {
-    cpg.controlStructure.where(_.condition.repeat(_.astChildren)(_.whilst(_.not(_.isCall.name(callName)))))
+def findControlStructuresWhoseConditionCalls(callName: String) = cpg.controlStructure.where(_.condition.repeat(_.astChildren)(_.whilst(_.not(_.isCall.name(callName)))))
     // cpg.controlStructure.where(_.condition.or(_.isCall.name(callname),_.repeat(_.astChildren)(_.until(_.isCall.name(callName)))))
-}
 
 /** Find every CALL of method `<callName>` that is part of a CONTROL_STRUCTURE condition. */
-def findCallInConditions(callName: String): Iterator[AstNode] = {
-    cpg.controlStructure.condition.repeat(_.astChildren)(_.whilst(_.not(_.isCall.name(callName))))
+def findCallInConditions(callName: String): Iterator[AstNode] = cpg.controlStructure.condition.repeat(_.astChildren)(_.whilst(_.not(_.isCall.name(callName))))
     //cpg.controlStructure.condition.or(_.isCall.name(callName),_.repeat(_.astChildren)(_.until(_.isCall.name(callName))))
-}
 
 /** Find every CALL of `<operator>.conditional` (inline if-else) that uses method `<callName>`. */
-def findConditionalCalling(callName: String) = {
-    cpg.call.name("<operator>.conditional").where(_.astChildren.isExpression.argumentIndex(1).repeat(_.astChildren)(_.whilst(_.not(_.isCall.name(callName)))))
+def findConditionalCalling(callName: String) = cpg.call.name("<operator>.conditional").where(_.astChildren.isExpression.argumentIndex(1).repeat(_.astChildren)(_.whilst(_.not(_.isCall.name(callName)))))
     //cpg.call.name("<operator>.conditional").where(_.astChildren.isExpression.argumentIndex(1).or(_.isCall.name(callName),_.repeat(_.astChildren)(_.until(_.isCall.name(callName)))))
-}
 
 /** Find every CALL of method `<callName>` that is part of a `<operator>.conditional` CALL's argument. */
-def findCallInConditionals(callName: String) = {
-    cpg.call.name("<operator>.conditional").astChildren.isExpression.argumentIndex(1).repeat(_.astChildren)(_.whilst(_.not(_.isCall.name(callName))))
-}
+def findCallInConditionals(callName: String) = cpg.call.name("<operator>.conditional").astChildren.isExpression.argumentIndex(1).repeat(_.astChildren)(_.whilst(_.not(_.isCall.name(callName))))
 
-def findIncludedFiles(traversal: Iterator[Call]): Iterator[File] = {
-    cpg.file.filter(fileNode => traversal.or(_.name("include"),_.name("require"),_.name("include_once"),_.name("require_once")).argument.ast.isLiteral.typeFullName("string").code.exists(_.contains(fileNode.name)))
+def findIncludedFiles(traversal: Iterator[Call]): Iterator[File] = cpg.file.filter(fileNode => traversal.or(_.name("include"),_.name("require"),_.name("include_once"),_.name("require_once")).argument.ast.isLiteral.typeFullName("string").code.exists(_.contains(fileNode.name)))
     //cpg.file.filter(fileNode => importCalls.argument.ast.isLiteral.typeFullName("string").code.exists(_.contains(fileNode.name)))
-}
 
 /*
 Joern Queries that I haven't translated to SCALA
