@@ -177,9 +177,18 @@ def is_part_of_condition(cpg: Cpg, relevant_nodes: Iterator[? <: AstNode]): Iter
   * @param input_cause_nodes
   * @param callResolver
   */
-def due_to(cpg: Cpg, input_consequence_nodes: Iterator[? <: AstNode], input_cause_nodes: Iterator[? <: AstNode])(implicit callResolver: ICallResolver): List[(? <: AstNode, ? <: AstNode)] = {
+def due_to(cpg: Cpg, input_consequence_nodes: Iterator[? <: AstNode], input_cause_nodes: Iterator[? <: AstNode], print: Boolean = false)(implicit callResolver: ICallResolver): List[(? <: AstNode, ? <: AstNode)] = {
     val consequence_nodes = input_consequence_nodes.toSet
     val cause_nodes = input_cause_nodes.toSet
+
+    if print then
+        println("STARTING SEARCH AT:")
+        consequence_nodes.foreach(node => println(s"    ${Iterator.single(node).p}"))
+        println("")
+    if print then
+        println("SEARCHING FOR:")
+        cause_nodes.foreach(node => println(s"    ${Iterator.single(node).p}"))
+        println("")
 
     // save followed steps in List // TODO: come up with better way to store paths
     val result = ListBuffer.empty[(? <: AstNode,? <: AstNode)]
@@ -199,6 +208,7 @@ def due_to(cpg: Cpg, input_consequence_nodes: Iterator[? <: AstNode], input_caus
                     result += temp
                     // remove node `x` from further searches in current loop
                     found_set = found_set ++ Set(x) // for some reason, using `+` or `incl` does not work
+                    if print then println("FOUND - SEE RESULT")
                 }
             })
         })
@@ -209,6 +219,12 @@ def due_to(cpg: Cpg, input_consequence_nodes: Iterator[? <: AstNode], input_caus
         // check: nodes must be reachable within method in order for method call to be relevant
         search_set = is_part_of_containing_methods_execution(search_set.iterator).toSet
 
+        if print then
+            println("SEARCHING FOR CALLS OF METHODS:")
+            search_set.isCfgNode.foreach(node => {
+                if !node.equals(node.method) then println(s"    ${Iterator.single(node.method).p}")
+            })
+            println("")
         /*
         // TEMPORARY ADDITION TO MAKE CLEAR THE CONNECTION BETWEEN THE NODE AND THE METHOD I FIND IT IN
         search_set.isCfgNode.foreach(node => {
@@ -221,10 +237,16 @@ def due_to(cpg: Cpg, input_consequence_nodes: Iterator[? <: AstNode], input_caus
 
         // search for all nodes
         search_set.isCfgNode.method.dedup.foreach(method_node => {
+            var found_0: Boolean = false
+            var found_1: Boolean = false
+            var found_2: Boolean = false
+            var found_3: Boolean = false
             method_node match
                 // anonymous function
-                case y if y.name.contains("<lambda>") => { 
+                case y if y.name.contains("<lambda>") => {
                     new_search_set = new_search_set ++ get_calls_via_variable_assignment(cpg, Iterator.single(y)).toSet
+                    if print then
+                        found_0 = get_calls_via_variable_assignment(cpg, Iterator.single(y)).toSet.size > 0
                     /*
                     // TEMPORARY ADDITION TO MAKE CLEAR THE CONNECTION BETWEEN THE METHOD AND THE NODE THAT CALLS IT
                     get_calls_via_variable_assignment(cpg, Iterator.single(y)).toSet.foreach(callnode => {
@@ -236,6 +258,8 @@ def due_to(cpg: Cpg, input_consequence_nodes: Iterator[? <: AstNode], input_caus
                 // global file function
                 case y if y.name.equals("<global>") => { 
                     new_search_set = new_search_set ++ get_inclusion_calls(cpg, Iterator.single(y)).toSet 
+                    if print then
+                        found_1 = get_inclusion_calls(cpg, Iterator.single(y)).toSet.size > 0
                     /*
                     // TEMPORARY ADDITION TO MAKE CLEAR THE CONNECTION BETWEEN THE METHOD AND THE NODE THAT CALLS IT
                     get_inclusion_calls(cpg, Iterator.single(y)).toSet.foreach(callnode => {
@@ -249,6 +273,9 @@ def due_to(cpg: Cpg, input_consequence_nodes: Iterator[? <: AstNode], input_caus
                     new_search_set = new_search_set 
                         ++ y.callIn.toSet // regular call -> CPG has `CALL`-edge
                         ++ get_calls_via_callbacks(cpg, Iterable.single(y)).toSet // via callback
+                    if print then
+                        found_2 = y.callIn.toSet.size > 0
+                        found_3 = get_calls_via_callbacks(cpg, Iterable.single(y)).toSet.size > 0
                     /*
                     // TEMPORARY ADDITION TO MAKE CLEAR THE CONNECTION BETWEEN THE METHOD AND THE NODE THAT CALLS IT
                     y.callIn.toSet.foreach(callnode => {
@@ -262,10 +289,26 @@ def due_to(cpg: Cpg, input_consequence_nodes: Iterator[? <: AstNode], input_caus
                     })
                     */
                 }
+            if print then
+                if (found_0 || found_1 || found_2 || found_3) then
+                    println("FOUND CALLS")
+                    if found_0 then get_calls_via_variable_assignment(cpg, Iterator.single(method_node)).foreach(node => println(s"    ${Iterator.single(node).p}"))
+                    if found_1 then get_inclusion_calls(cpg, Iterator.single(method_node)).foreach(node => println(s"    ${Iterator.single(node).p}"))
+                    if found_2 then method_node.callIn.foreach(node => println(s"    ${Iterator.single(node).p}"))
+                    if found_3 then get_calls_via_callbacks(cpg, Iterable.single(method_node)).foreach(node => println(s"    ${Iterator.single(node).p}"))
+                    println("")
+                else 
+                    println("FOUND NO CALLS")
+                    println("")
+
         })
 
         // prepare for next loop
         search_set = new_search_set
+        if print then
+            println("NEW SEARCH FOR:")
+            search_set.foreach(node => println(s"    ${Iterator.single(node).p}"))
+            println("")
 
     result.to(List)
 

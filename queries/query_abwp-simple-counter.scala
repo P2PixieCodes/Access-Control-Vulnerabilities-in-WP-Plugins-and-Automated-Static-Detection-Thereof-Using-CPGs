@@ -8,7 +8,7 @@ import io.shiftleft.semanticcpg.*
 import io.shiftleft.semanticcpg.language.*
 import flatgraph.traversal.*
 
-def find_vuln_00(cpg: Cpg)(implicit callResolver: ICallResolver) = {
+def find_vuln_00(cpg: Cpg, print: Boolean = false)(implicit callResolver: ICallResolver) = {
     def sources = cpg.call.name("is_admin")
     def sinks = cpg.call.name("submit_button")
 
@@ -16,5 +16,5 @@ def find_vuln_00(cpg: Cpg)(implicit callResolver: ICallResolver) = {
     val relevant_sources = sources.l // TODO: filter for only those that are automatically reachable?
 
     // query the vuln
-    due_to(cpg,cpg.call.name("submit_button"), relevant_sources.iterator)
+    due_to(cpg,cpg.call.name("submit_button"), relevant_sources.iterator, print)
 }
