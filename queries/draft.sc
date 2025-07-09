@@ -46,69 +46,6 @@ def findIncludedFiles(traversal: Iterator[Call]): Iterator[File] = {
     //cpg.file.filter(fileNode => importCalls.argument.ast.isLiteral.typeFullName("string").code.exists(_.contains(fileNode.name)))
 }
 
-def model_abwp_simple_counter = {
-
-    /* V1: disregarded bc of unnecessary expression evaluation
-
-    // get IF-control structure that only calls `is_admin`
-    def source_cs = cpg.controlStructure.isIf.where(_.condition.isCall.name("is_admin")) // Iterator[ControlStructure]
-    // follow CFG to true-case (order == 2; see joern/semanticcpg/src/main/scala/io/shiftleft/semanticcpg/language/types/expressions/ControlStructureTraversal.scala)
-    def true_case = source_cs.condition.cfgNext.where(_.repeat(_.astParent)(_.until(_.astParent.isControlStructure.within(sourceCS.toSet))).filter(_.order == 2)) // Iterator[CfgNode]
-    */
-
-    /* V2: disregarded bc it's easier to go sink->src instead of src->sink
-    def isSink(node: AstNode): Boolean = sinks.contains(node)
-    // collect all potential sinks in a list
-    val findings: ListBuffer[AstNode] = new ListBuffer()
-    // check in CFG descendants
-    findings.addAll(cfgDescendants.filter(isSink))
-    // assumption that file imports
-    var called_methods: Iterator[Method] = 
-           cfgDescendants.isCall.callee.cast[Method].internal // get called methods
-        ++ findIncludedFiles(cfgDescendants).method.name("<global>") // get imported files
-    //Iterator.single(cfgDescendants.isCall.callee.cast[Method].internal.l(1)).call.name("require_once").argument.ast.isLiteral.typeFullName("string").code.l.p
-    while !called_methods.isEmpty do
-        // get new called methods and imported files
-        val new_methods = new ListBuffer()
-        called_methods.foreach(method => new_methods += method.cfgNode.isCall.callee.cast[Method].internal.l)
-        called_methods = new_methods.toList
-    findings
-    */
-
-    /* V3 */
-
-    def sources: Iterator[Call] = (findCallInConditions("is_admin") ++ findCallInConditionals("is_admin")).cast[Call]
-    def cfgDescendants: Iterator[CfgNode] = sources.dominates
-
-    def sinks: Iterator[Method] = cpg.method.name("submit_button")
-
-    // using `calledBy` (see joern/semanticcpg/src/main/scala/io/shiftleft/semanticcpg/language/callgraphextension/MethodTraversal.scala)
-    //    NOTE: this won't work on the original due to indirect method calls
-
-    val result0a = sinks.calledBy(sources.method) // directly/transitively called in the same method
-    val result0b = sinks.callIn.dominatedBy(sources) // in the same method *and* part of `cfgDescendants` // <- doppelt gemoppelt
-    val result1 = sinks.calledBy(cfgDescendants.isCall.callee) // with one method call in-between
-
-    
-
-    // partially inspired by https://jaiverma.github.io/blog/joern-intro Case 2-4
-
-    val indirectCalls = cpg.call.or(_.name("add_action"), _.name("add_options_page"), _.name("add_shortcode")) // indirect method calls
-    val importCalls = cpg.call.or(_.name("include"),_.name("require"),_.name("include_once"),_.name("require_once")) // import calls of files
-
-    val sinkCalls = sinks.callIn // direct calls of SINK
-    val methods = sinkCalls.method.dedup // methods containing SINK
-    
-    // TODO: filter indirect calls by method name in arguments
-    // TODO: filter import calls by file name in arguments IF current method is `"<global>"`
-    //if methods.name then 
-    
-    //cpg.file.filter(fileNode => importCalls.argument.ast.isLiteral.typeFullName("string").code.exists(_.contains(fileNode.name)))
-
-}
-
-@main def hello() = println("Hello, World!")
-
 /*
 Joern Queries that I haven't translated to SCALA
 
