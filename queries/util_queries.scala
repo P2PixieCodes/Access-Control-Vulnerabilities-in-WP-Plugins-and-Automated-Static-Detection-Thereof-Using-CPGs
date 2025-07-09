@@ -193,7 +193,7 @@ def due_to(cpg: Cpg, input_consequence_nodes: Iterator[? <: AstNode], input_caus
         cause_nodes.foreach(node => println(s"    ${Iterator.single(node).p}"))
         println("")
 
-    // save followed steps in List // TODO: come up with better way to store paths
+    // save followed steps in List // TODO: come up with better way to store/follow paths
     val result = ListBuffer.empty[(? <: AstNode,? <: AstNode)]
     
     // search backwards from consequence to find a cause (bc less potential branching)
