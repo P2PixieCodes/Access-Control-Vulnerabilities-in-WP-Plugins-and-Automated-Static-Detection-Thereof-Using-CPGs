@@ -28,7 +28,10 @@ def get_inclusion_calls(cpg: Cpg, methods: Iterator[Method]): Iterator[Call] = {
     val all_file_calls = cpg.call.or(_.name("include"),_.name("include_once"),_.name("require"),_.name("require_once")).l
 
     // we assume that the entire filename is passed as a string literal to the statement
-    def relevant_file_calls = all_file_calls.iterator.filter(node => file_methods.iterator.exists(method_node => node.code.contains(method_node.filename)))
+    def relevant_file_calls = all_file_calls.iterator.filter(node => file_methods.iterator.exists(method_node => { 
+        node.code.contains(method_node.filename)
+        || node.code.contains(method_node.filename.substring(method_node.filename.lastIndexOf("/")+1)) // case where the filename without path is passed
+    }))
 
     // TODO: case where the filename/path is dynamically constructed
     
