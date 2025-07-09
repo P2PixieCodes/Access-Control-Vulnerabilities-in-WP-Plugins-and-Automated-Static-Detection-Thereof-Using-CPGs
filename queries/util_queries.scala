@@ -103,21 +103,33 @@ def get_calls_via_callbacks(cpg: Cpg, methods: Iterator[Method]): Iterator[Call]
     
                 // "classname::methodname" as string (LITERAL) -- only possible for static methods
                 case x if x.isLiteral && x.code.contains("::")
-                    => false // TODO
+                    =>  method_names.exists(
+                            name => x.code.endsWith("::" + name)
+                            // TODO: also check if classname matches method's containing/inheriting TYPE_DECL
+                        )
                 // "methodname" as string (LITERAL)
                 case x if x.isLiteral
-                    => method_names.exists(name => x.code.contains(name))
+                    =>  method_names.exists(name => x.code.contains(name))
+                
                 // callback using array()
                 // `x.astChildren.order(3).cast[Call].argument(2)` reveals either object (IDENTIFIER) or (only if method is static) classname (LITERAL) // TODO
                 // `x.astChildren.order(2).cast[Call].argument(2)` reveals method name (LITERAL)
                 case x if x.isBlock
-                    => method_names.exists(name => x.astChildren.order(3).cast[Call].argument(2).next.code.contains(name))
+                    =>  method_names.exists(
+                            name => x.astChildren.order(3).cast[Call].argument(2).next.code.contains(name)
+                            // TODO: handle other argument
+                                // TODO: check if IDENTIFIER's object is instance of method's containing/inheriting TYPE_DECL
+                                // TODO: check if LITERAL matches method's containing inheriting TYPE_DECL
+                        )
+                
                 // object with `__invoke` method (IDENTIFIER)
                 case x if x.isIdentifier
-                    => false // TODO
+                    =>  false 
+                        // TODO: check if IDENTIFIER's object is instance of a class with defined `__invoke` method
+                
                 // unknown type of callback ?
                 case _
-                    => false
+                    =>  false
             }
         )
     callback_calls
