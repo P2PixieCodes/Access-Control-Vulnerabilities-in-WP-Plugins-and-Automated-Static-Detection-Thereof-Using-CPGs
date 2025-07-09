@@ -173,12 +173,20 @@ def is_part_of_condition(cpg: Cpg, relevant_nodes: Iterator[? <: AstNode]): Iter
 }
 
 /**
+  * Finds paths by which execution of any node in group B can lead to execution of any node in group A.
   * 
+  * (Note: this does not evaluate expressions in conditions of control structures)
   *
   * @param cpg
+  *     the CPG instance
   * @param input_consequence_nodes
+  *     an `Iterator[? <: AstNode]` of nodes in group A
   * @param input_cause_nodes
+  *     an `Iterator[? <: AstNode]` of nodes in group B
   * @param callResolver
+  *     (implicit) - required for successful compilation
+  * @return
+  *     to be decided ...
   */
 def due_to(cpg: Cpg, input_consequence_nodes: Iterator[? <: AstNode], input_cause_nodes: Iterator[? <: AstNode], print: Boolean = false)(implicit callResolver: ICallResolver): List[(? <: AstNode, ? <: AstNode)] = {
     val consequence_nodes = input_consequence_nodes.toSet
