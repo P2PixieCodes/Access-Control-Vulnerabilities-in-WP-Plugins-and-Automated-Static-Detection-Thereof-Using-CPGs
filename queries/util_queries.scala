@@ -93,7 +93,8 @@ def get_calls_via_callbacks(cpg: Cpg, methods: Iterator[Method]): Iterator[Call]
     // (incomplete) list of methods that take callbacks
     val callback_methods = Map(
         "add_action" -> 2, 
-        "add_options_page" -> 5
+        "add_options_page" -> 5,
+        "add_submenu_page" -> 6
     )
 
     val callback_calls_wip = cpg.call.filter(node => callback_methods.keys.exists(_.contains(node.name))).l
