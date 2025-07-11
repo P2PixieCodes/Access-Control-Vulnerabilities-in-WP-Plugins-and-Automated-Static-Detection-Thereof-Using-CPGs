@@ -448,8 +448,9 @@ def due_to(cpg: Cpg, sink_nodes: Iterator[? <: AstNode], source_nodes: Iterator[
                 case x: io.shiftleft.codepropertygraph.generated.nodes.Call if source_set.contains(x) =>
                     s"        found: ${x.code}" + "\n" +
                     //s"               |" + "\n" +
-                    s"             ├── in method: ${x.method.code}" + "\n" +
-                    s"             └──── in file: ${x.method.filename}"
+                    s"             ├── in line: ${x.lineNumber}" + "\n" +
+                    s"             ├──── in method: ${x.method.code}" + "\n" +
+                    s"             └────── in file: ${x.method.filename}"
                 case x: io.shiftleft.codepropertygraph.generated.nodes.Call if x.isCall => 
                     s"    called by: ${x.code}" + "\n" +
                     s"             ├── call name: ${x.name}" + "\n" +
