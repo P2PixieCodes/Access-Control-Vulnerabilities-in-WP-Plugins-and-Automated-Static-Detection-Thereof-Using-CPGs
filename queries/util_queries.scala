@@ -510,3 +510,252 @@ def due_to(cpg: Cpg, sink_nodes: Iterator[? <: AstNode], source_nodes: Iterator[
     result.toSet.iterator
 
 }
+
+
+
+
+
+
+// WIP AND PROBABLY NOT BETTER THAN JUST CALLING `due_to` MULTIPLE TIMES
+
+
+/**
+  * Finds paths by which execution of any source node may lead to execution of any intermediary node before execution of any sink node.
+  * 
+  * (Note: this does not evaluate expressions in conditions of control structures)
+  *
+  * @param cpg
+  *     the CPG instance
+  * @param sink_nodes
+  *     an `Iterator[? <: AstNode]` of sink nodes
+  * @param source_nodes
+  *     an `Iterator[? <: AstNode]` of source nodes
+  * @param intermediaries (optional - default: empty iterator)
+  * @param print (optional - default: false)
+  * @param callResolver (implicit)
+  *     required for successful compilation
+  * @return
+  *     to be decided ...
+  */
+def due_to_with_intermediary(cpg: Cpg, sink_nodes: Iterator[? <: AstNode], source_nodes: Iterator[? <: AstNode], intermediary_nodes: Iterator[? <: AstNode], print: Boolean = false)(implicit callResolver: ICallResolver)/*: Set[List[? <: AstNode]]*/ = {
+    // save as sets for reusability
+    val sink_set = sink_nodes.toSet
+    val source_set = source_nodes.toSet
+    val intermediary_set = intermediary_nodes.flatMap(node => node match
+        case y: io.shiftleft.codepropertygraph.generated.nodes.Method if y.isMethod && y.name.contains("<lambda>")  => get_calls_via_variable_assignment(cpg, Iterator.single(y))
+        case y: io.shiftleft.codepropertygraph.generated.nodes.Method if y.isMethod && y.name.equals("<global>")    => get_inclusion_calls(cpg, Iterator.single(y))
+        case y: io.shiftleft.codepropertygraph.generated.nodes.Method if y.isMethod                                 => y.callIn ++ get_calls_via_callbacks(cpg, Iterable.single(y))
+        case y                                                                                                      => y
+        ).toSet
+    val require_intermediary: Boolean = (intermediary_set.size > 0)
+
+    if print then
+        println("STARTING SEARCH AT SINKS:")
+        sink_set.foreach(node => println(s"    ${Show.default.apply(node)}"))
+        if require_intermediary then 
+            println("SEARCHING FOR INTERMEDIARIES:")
+            intermediary_set.foreach(node => println(s"    ${Show.default.apply(node)}"))
+        println("SEARCHING FOR:")
+        source_set.foreach(node => println(s"    ${Show.default.apply(node)}"))
+        println("")
+
+    // save followed paths (List) in Set
+    val result: scala.collection.mutable.Set[List[? <: AstNode]] = scala.collection.mutable.Set()
+    
+    // search backwards from sink to find a source (bc less potential branching)
+    var search_set: Set[(? <: AstNode, List[? <: AstNode], Boolean)] = 
+        sink_set                                        // nodes
+            .lazyZip(sink_set.map(node => List(node)))  // path
+            .lazyZip(sink_set.map(node => false))       // encountered intermediary
+            .toSet
+
+    breakable {
+        // keep track of already visited search nodes to prevent potential loops
+        var visited_set: Set[? <: AstNode] = Set()
+        // keep track of already visited search nodes via encounter path to prevent dismissing encounter paths in favor of non-encounter paths
+        var visited_and_encountered_set: Set[? <: AstNode] = Set()
+
+        while search_set.size > 0 do
+            if print && !search_set.map(entry => entry(0)).equals(sink_set) then
+                println("------------------------------ LOOP")
+                println("NEW SEARCH FOR:")
+                search_set.foreach(entry => println(s"    ${Show.default.apply(entry(0))}"))
+                println("")
+            
+            // add to visited nodes
+            visited_set = visited_set ++ search_set.map(entry => entry(0))
+            visited_and_encountered_set = visited_and_encountered_set ++ search_set.filter(entry => entry(2)).map(entry => entry(0))
+            // nodes to search in next loop
+            var new_search_set: scala.collection.mutable.Set[(? <: AstNode, List[? <: AstNode], Boolean)] = scala.collection.mutable.Set()
+
+            // search for direct CFG connection: execution of source node can lead to execution of target node within the same method
+            var found_source_set: Set[? <: AstNode] = Set()
+            var encountered_intermediary_set: Set[? <: AstNode] = Set()
+            search_set.foreach((x,prevPath,encountered) => {
+                x.isCfgNode.dominatedBy.foreach(y => { 
+                    if source_set.contains(y) then {
+                        if (require_intermediary && encountered) then {
+                            println("found invalid path")
+                        } else {
+                            // add last "due to" connection to result
+                            result.add(prevPath :+ y)
+                            // remove node `x` from further searches in current loop
+                            found_source_set = found_source_set ++ Set(x) // for some reason, using `+` or `incl` for single element does not compile
+                            if print then println("FOUND - SEE RESULT")
+                        }
+                    }
+                    if intermediary_set.contains(y) then {
+                        // remove node `x` from further searches in current loop
+                        encountered_intermediary_set = encountered_intermediary_set ++ Set(x)
+                        // add node `y` to search in next loop and add "due to intermediary" pair to path
+                        new_search_set.add((y, prevPath :+ y, true))
+                        if print then println("ENCOUNTERED")
+                    }
+                })
+            })
+            
+            search_set = search_set.filter((node,_,_) =>
+                // no direct CFG connection -> remaining consequence nodes may be part of *methods* that are called "due to" a source node
+                !found_source_set.contains(node) &&
+                // connected to intermediary -> next step in path has already been added to next loop's nodes
+                !encountered_intermediary_set.contains(node) &&
+                // check: nodes must be reachable within method in order for method call to be relevant
+                is_part_of_containing_methods_execution(Iterator.single(node)).toSet.contains(node)
+            )
+
+            if search_set.size <= 0 then break
+
+            // search for call nodes
+            search_set.foreach((x,prevPath,encountered) => {
+                if print then
+                    println("SEARCHING FOR CALLS OF METHOD:")
+                    x.isCfgNode.method.foreach( method_node =>
+                        println(s"    ${Show.default.apply(method_node)}")
+                    )
+                var found_0: Boolean = false // for printing
+                var found_1: Boolean = false // for printing
+                var found_2: Boolean = false // for printing
+                var found_3: Boolean = false // for printing
+
+                x.isCfgNode.method.foreach(method_node => if !visited_set.contains(method_node) then
+                    // add to visited nodes
+                    visited_set = visited_set ++ Set(method_node)
+                    if encountered then 
+                        visited_and_encountered_set = visited_and_encountered_set ++ Set(method_node)
+                    // collect calls
+                    method_node match
+                        // anonymous function
+                        case y if y.name.contains("<lambda>") => {
+                            get_calls_via_variable_assignment(cpg, Iterator.single(y)).foreach(call => 
+                                // has not been reached (via encounter-path) yet
+                                if !visited_set.contains(call) || (encountered && !visited_and_encountered_set.contains(call)) then
+                                    if intermediary_set.contains(call) then new_search_set.add((call, prevPath :+ method_node :+ call,true))
+                                    else new_search_set.add((call, prevPath :+ method_node :+ call,encountered))
+                            )
+                            if print then
+                                found_0 = get_calls_via_variable_assignment(cpg, Iterator.single(y)).toSet.size > 0
+                        }
+                        // global file function
+                        case y if y.name.equals("<global>") => { 
+                            get_inclusion_calls(cpg, Iterator.single(y)).foreach(call =>
+                                // has not been reached (via encounter-path) yet
+                                if !visited_set.contains(call) || (encountered && !visited_and_encountered_set.contains(call)) then
+                                    if intermediary_set.contains(call) then new_search_set.add((call, prevPath :+ method_node :+ call,true))
+                                    else new_search_set.add((call, prevPath :+ method_node :+ call,encountered))
+                            )
+                            if print then
+                                found_1 = get_inclusion_calls(cpg, Iterator.single(y)).toSet.size > 0
+                        }
+                        // regular function
+                        case y => {
+                            // regular call -> CPG has `CALL`-edge
+                            y.callIn.foreach(call =>
+                                // has not been reached (via encounter-path) yet
+                                if !visited_set.contains(call) || (encountered && !visited_and_encountered_set.contains(call)) then
+                                    if intermediary_set.contains(call) then new_search_set.add((call, prevPath :+ method_node :+ call,true))
+                                    else new_search_set.add((call, prevPath :+ method_node :+ call,encountered))
+                            )
+                            if print then
+                                found_2 = y.callIn.toSet.size > 0
+                            // via callback
+                            get_calls_via_callbacks(cpg, Iterable.single(y)).foreach(call =>
+                                // has not been reached (via encounter-path) yet
+                                if !visited_set.contains(call) || (encountered && !visited_and_encountered_set.contains(call)) then
+                                    if intermediary_set.contains(call) then new_search_set.add((call, prevPath :+ method_node :+ call,true))
+                                    else new_search_set.add((call, prevPath :+ method_node :+ call,encountered))
+                            )
+                            if print then
+                                found_3 = get_calls_via_callbacks(cpg, Iterable.single(y)).toSet.size > 0
+                        }
+
+                    if print then
+                        if (found_0 || found_1 || found_2 || found_3) then
+                            println("FOUND CALLS")
+                            /*
+                            if found_0 then get_calls_via_variable_assignment(cpg, Iterator.single(method_node)).foreach(node => println(s"    ${Show.default.apply(node)}"))
+                            if found_1 then get_inclusion_calls(cpg, Iterator.single(method_node)).foreach(node => println(s"    ${Show.default.apply(node)}"))
+                            if found_2 then method_node.callIn.foreach(node => println(s"    ${Show.default.apply(node)}"))
+                            if found_3 then get_calls_via_callbacks(cpg, Iterable.single(method_node)).foreach(node => println(s"    ${Show.default.apply(node)}"))
+                            */
+                            println("")
+                        else 
+                            println("FOUND NO CALLS")
+                            println("")
+                )
+            })
+
+            println(s"search_set.size: ${new_search_set.size}")
+            println(s"new_search_set.size: ${new_search_set.size}")
+            println(s"diff size: ${new_search_set.map(entry => entry(0)).diff(search_set.map(entry => entry(0))).size}")
+            println(s"encountered: ${new_search_set.exists(entry => entry(2))}")
+
+            new_search_set.foreach(entry => {
+                if entry(2) then
+                    println("ENCOUNTERED PATH")
+                    entry(1).foreach(node => println(s"    ${Show.default.apply(node)}"))
+                    println("")
+            })
+            // prepare for next loop
+            search_set = new_search_set.toSet//.removedAll(search_set)
+    }
+
+    var counter: Int = 1
+    if result.toSet.size > 0 then
+        result.toSet.foreach(list => {
+            println(s"Path $counter")
+            list.map(node => node match 
+                case x if sink_set.contains(x) => 
+                    s"        start: ${x.code}"
+                case x: io.shiftleft.codepropertygraph.generated.nodes.Call if source_set.contains(x) =>
+                    s"        found: ${x.code}" + "\n" +
+                    s"        ------ in method: ${x.method.code}" + "\n" +
+                    s"        ----------------- in file: ${x.method.filename}"
+                case x: io.shiftleft.codepropertygraph.generated.nodes.Call if intermediary_set.contains(x) =>
+                    s"  encountered: ${x.code}" + "\n" +
+                    s"  ------------ in method: ${x.method.code}" + "\n" +
+                    s"  ----------------------- in file: ${x.method.filename}"
+                case x: io.shiftleft.codepropertygraph.generated.nodes.Call if x.isCall => 
+                    s"    called by: ${x.code}"
+                case x: io.shiftleft.codepropertygraph.generated.nodes.Method if intermediary_set.contains(x) =>
+                    s"  encountered: ${x.code}" + "\n" +
+                    s"  ------------ in file: ${x.filename}"
+                case x: io.shiftleft.codepropertygraph.generated.nodes.Method if x.isMethod => 
+                    s"    in method: ${x.code}" + "\n" +
+                    s"    ---------- in file: ${x.filename}"
+                case _ => 
+                    s"        found: ${node.code}"
+            ).foreach(content => println(content))
+            /*
+            list.foreach(node => {
+                println(s"    ${node.getClass}, ${node.name}, `${node.code}`")
+            })
+            */
+            println("")
+            counter += 1
+        })
+    else
+        println("No paths found!")
+
+    //result.toSet
+
+}
