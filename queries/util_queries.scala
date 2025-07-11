@@ -221,7 +221,11 @@ def get_calls_via_callbacks(cpg: Cpg, methods: Iterator[Method]): Iterator[Call]
         // get relevant methods
         .filter(node => callback_methods.keys.exists(_.equals(node.name)))
         // filter relevant CALLs by identifying relevant METHOD-names in corresponding callbacks
-        .filter(node => callback_methods(node.name).forall(callback_index => node.argument(callback_index) // get callback
+        .filter(node => callback_methods(node.name).forall(callback_index => {
+            if node.argument.size < callback_index then 
+                false // parameter may be optional, e.g., `has_action`
+            else 
+                node.argument(callback_index) // get callback
             match { // get method name according to callback type
     
                 // "classname::methodname" as string (LITERAL) -- only possible for static methods
@@ -240,7 +244,7 @@ def get_calls_via_callbacks(cpg: Cpg, methods: Iterator[Method]): Iterator[Call]
                 // `x.astChildren.order(2).cast[Call].argument(2)` reveals method name (LITERAL)
                 case x if x.isBlock
                     =>  method_names.exists(
-                            name => x.astChildren.order(3).cast[Call].argument(2).next.code.contains(name)
+                                name => x.astChildren.order(3).cast[Call].argument(2).exists(node => node.code.contains("\"" + name + "\"") || node.code.contains("'" + name + "'"))
                             // TODO: handle other argument
                                 // TODO: check if IDENTIFIER's object is instance of method's containing/inheriting TYPE_DECL
                                 // TODO: check if LITERAL matches method's containing inheriting TYPE_DECL
@@ -255,6 +259,7 @@ def get_calls_via_callbacks(cpg: Cpg, methods: Iterator[Method]): Iterator[Call]
                 case _
                     =>  false
 
+                }
         }))
     callback_calls
 }
