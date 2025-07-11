@@ -471,3 +471,8 @@ def due_to(cpg: Cpg, sink_nodes: Iterator[? <: AstNode], source_nodes: Iterator[
     result.toSet.iterator
 
 }
+
+
+def due_to_is_admin(cpg: Cpg, sink_nodes: Iterator[? <: AstNode], print: Boolean = false)(implicit callResolver: ICallResolver): Iterator[List[? <: AstNode]] = {
+    due_to(cpg, sink_nodes, cpg.call.name("is_admin"), print)
+}
