@@ -236,38 +236,38 @@ def get_calls_via_callbacks(cpg: Cpg, methods: Iterator[Method]): Iterator[Call]
                 false // parameter may be optional, e.g., `has_action`
             else 
                 node.argument(callback_index) // get callback
-            match { // get method name according to callback type
-    
-                // "classname::methodname" as string (LITERAL) -- only possible for static methods
-                case x if x.isLiteral && x.code.contains("::")
-                    =>  method_names.exists(
-                            name => x.code.endsWith("::" + name)
-                            // TODO: also check if classname matches method's containing/inheriting TYPE_DECL
-                        )
-                
-                // "methodname" as string (LITERAL)
-                case x if x.isLiteral
-                    =>  method_names.exists(name => x.code.contains(name))
-                
-                // callback using array()
-                // `x.astChildren.order(3).cast[Call].argument(2)` reveals either object (IDENTIFIER) or (only if method is static) classname (LITERAL) // TODO
-                // `x.astChildren.order(2).cast[Call].argument(2)` reveals method name (LITERAL)
-                case x if x.isBlock
-                    =>  method_names.exists(
+                match { // get method name according to callback type
+        
+                    // "classname::methodname" as string (LITERAL) -- only possible for static methods
+                    case x if x.isLiteral && x.code.contains("::")
+                        =>  method_names.exists(
+                                name => x.code.endsWith("::" + name)
+                                // TODO: also check if classname matches method's containing/inheriting TYPE_DECL
+                            )
+                    
+                    // "methodname" as string (LITERAL)
+                    case x if x.isLiteral
+                        =>  method_names.exists(name => x.code.contains(name))
+                    
+                    // callback using array()
+                    // `x.astChildren.order(3).cast[Call].argument(2)` reveals either object (IDENTIFIER) or (only if method is static) classname (LITERAL) // TODO
+                    // `x.astChildren.order(2).cast[Call].argument(2)` reveals method name (LITERAL)
+                    case x if x.isBlock
+                        =>  method_names.exists(
                                 name => x.astChildren.order(3).cast[Call].argument(2).exists(node => node.code.contains("\"" + name + "\"") || node.code.contains("'" + name + "'"))
-                            // TODO: handle other argument
-                                // TODO: check if IDENTIFIER's object is instance of method's containing/inheriting TYPE_DECL
-                                // TODO: check if LITERAL matches method's containing inheriting TYPE_DECL
-                        )
-                
-                // object with `__invoke` method (IDENTIFIER)
-                case x if x.isIdentifier
-                    =>  false 
-                        // TODO: check if IDENTIFIER's object is instance of a class with defined `__invoke` method
-                
-                // unknown type of callback ?
-                case _
-                    =>  false
+                                // TODO: handle other argument
+                                    // TODO: check if IDENTIFIER's object is instance of method's containing/inheriting TYPE_DECL
+                                    // TODO: check if LITERAL matches method's containing inheriting TYPE_DECL
+                            )
+                    
+                    // object with `__invoke` method (IDENTIFIER)
+                    case x if x.isIdentifier
+                        =>  false 
+                            // TODO: check if IDENTIFIER's object is instance of a class with defined `__invoke` method
+                    
+                    // unknown type of callback ?
+                    case _
+                        =>  false
 
                 }
         }))
@@ -364,15 +364,15 @@ def due_to(cpg: Cpg, sink_nodes: Iterator[? <: AstNode], source_nodes: Iterator[
             var found_source_set: Set[? <: AstNode] = Set()
             search_set.foreach((x,prevPath) => {
                 if !source_set.contains(x) then 
-                x.isCfgNode.dominatedBy.foreach(y => { 
-                    if source_set.contains(y) then {
-                        // add last "due to" connection to result
-                        result.add(prevPath :+ y)
-                        // remove node `x` from further searches in current loop
-                        found_source_set = found_source_set ++ Set(x) // for some reason, using `+` or `incl` for single element does not compile
-                        if print then println("FOUND - SEE RESULT")
-                    }
-                })
+                    x.isCfgNode.dominatedBy.foreach(y => { 
+                        if source_set.contains(y) then {
+                            // add last "due to" connection to result
+                            result.add(prevPath :+ y)
+                            // remove node `x` from further searches in current loop
+                            found_source_set = found_source_set ++ Set(x) // for some reason, using `+` or `incl` for single element does not compile
+                            if print then println("FOUND - SEE RESULT")
+                        }
+                    })
                 else 
                     // technically possible if the given sources are calls of an internal method
                     result.add(prevPath)
@@ -400,26 +400,26 @@ def due_to(cpg: Cpg, sink_nodes: Iterator[? <: AstNode], source_nodes: Iterator[
 
                 x.isCfgNode.method.foreach(method_node => 
                     if !visited_set.contains(method_node) then 
-                    // add to visited nodes
-                    visited_set = visited_set ++ Set(method_node)
-                    
-                    // collect calls for next loop
-                    var found: Boolean = false // for printing
-                    get_calls_for_methods(cpg, method_node).foreach(call =>
-                        val new_path = prevPath :+ method_node :+ call
-                        if !visited_set.contains(call) then 
-                            new_search_set.add(call, new_path)
-                        else 
-                            discarded_paths = discarded_paths ++ Set(new_path)
-                        if print then found = true
-                    )
-                    if print then
-                        if found then 
-                            println("FOUND CALLS")
-                            get_calls_for_methods(cpg, method_node).foreach(call => println(s"    ${Show.default.apply(call)}"))
-                        else
-                            println("FOUND NO CALLS")
-                        println("")
+                        // add to visited nodes
+                        visited_set = visited_set ++ Set(method_node)
+                        
+                        // collect calls for next loop
+                        var found: Boolean = false // for printing
+                        get_calls_for_methods(cpg, method_node).foreach(call =>
+                            val new_path = prevPath :+ method_node :+ call
+                            if !visited_set.contains(call) then 
+                                new_search_set.add(call, new_path)
+                            else 
+                                discarded_paths = discarded_paths ++ Set(new_path)
+                            if print then found = true
+                        )
+                        if print then
+                            if found then 
+                                println("FOUND CALLS")
+                                get_calls_for_methods(cpg, method_node).foreach(call => println(s"    ${Show.default.apply(call)}"))
+                            else
+                                println("FOUND NO CALLS")
+                            println("")
                     else
                         discarded_paths = discarded_paths ++ Set(prevPath :+ method_node)
                 )
@@ -438,7 +438,7 @@ def due_to(cpg: Cpg, sink_nodes: Iterator[? <: AstNode], source_nodes: Iterator[
                 var temp = found_path.slice(found_path.indexOf(path.last)+1,found_path.length)
                 result.add(path.concat(temp))
         })
-    })    
+    })
 
     // print result
     var counter: Int = 1
