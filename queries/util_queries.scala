@@ -10,6 +10,20 @@ import io.shiftleft.semanticcpg.*
 import io.shiftleft.semanticcpg.language.*
 import flatgraph.traversal.*
 
+def get_object_method_calls(cpg: Cpg, methods: Iterator[Method]): Iterator[Call] = {
+    /* // PRINT STUFF
+    val method_set_print = methods.toSet
+    println("\nMETHODS")
+    method_set_print.foreach(node => println(s"    ${node.fullName}\n    ---- ${node.code}"))
+    println("\nCALLS MATCHING FIRST CONDITION")
+    cpg.call.filter(call => method_set_print.exists(method => call.code.contains(s"->${method.name}"))).foreach(call => println(s"    `${call.code}` calls ${call.methodFullName} in line ${call.lineNumber}\n    ---- in method: ${call.method.fullName}"))
+    println("\nCALLS MATCHING SECOND CONDITION")
+    cpg.call.filter(call => method_set_print.exists(method => call.code.contains(s"->${method.name}") && call.methodFullName.endsWith(method.name))).foreach(call => println(s"    `${call.code}` calls ${call.methodFullName} in line ${call.lineNumber}\n    ---- in method: ${call.method.fullName}"))
+    */
+    val method_set = methods.toSet
+    cpg.call.filter(call => method_set.exists(method => call.code.contains(s"->${method.name}") && call.methodFullName.endsWith(method.name)))
+}
+
 /**
   * Given a file <global> method, get all includes/requires of the corresponding file.
   *
