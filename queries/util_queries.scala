@@ -398,60 +398,6 @@ def due_to(cpg: Cpg, sink_nodes: Iterator[? <: AstNode], source_nodes: Iterator[
                         else
                             println("FOUND NO CALLS")
                         println("")
-
-                    /* // OLD VERSION
-                    var found_0: Boolean = false // for printing
-                    var found_1: Boolean = false // for printing
-                    var found_2: Boolean = false // for printing
-                    var found_3: Boolean = false // for printing
-
-                    method_node match
-                        // anonymous function
-                        case y if y.name.contains("<lambda>") => {
-                            get_calls_via_variable_assignment(cpg, Iterator.single(y)).foreach(call => 
-                                if !visited_set.contains(call) then new_search_set.add((call, prevPath :+ method_node :+ call))
-                            )
-                            if print then
-                                found_0 = get_calls_via_variable_assignment(cpg, Iterator.single(y)).toSet.size > 0
-                        }
-                        // global file function
-                        case y if y.name.equals("<global>") => { 
-                            get_inclusion_calls(cpg, Iterator.single(y)).foreach(call =>
-                                if !visited_set.contains(call) then new_search_set.add((call, prevPath :+ method_node :+ call))
-                            )
-                            if print then
-                                found_1 = get_inclusion_calls(cpg, Iterator.single(y)).toSet.size > 0
-                        }
-                        // regular function
-                        case y => {
-                            // regular call -> CPG has `CALL`-edge
-                            y.callIn.foreach(call =>
-                                if !visited_set.contains(call) then new_search_set.add((call, prevPath :+ method_node :+ call))
-                            )
-                            if print then
-                                found_2 = y.callIn.toSet.size > 0
-                            // via callback
-                            get_calls_via_callbacks(cpg, Iterable.single(y)).foreach(call =>
-                                if !visited_set.contains(call) then new_search_set.add((call, prevPath :+ method_node :+ call))
-                            )
-                            if print then
-                                found_3 = get_calls_via_callbacks(cpg, Iterable.single(y)).toSet.size > 0
-                        }
-
-                    if print then
-                        if (found_0 || found_1 || found_2 || found_3) then
-                            println("FOUND CALLS")
-                            /*
-                            if found_0 then get_calls_via_variable_assignment(cpg, Iterator.single(method_node)).foreach(node => println(s"    ${Show.default.apply(node)}"))
-                            if found_1 then get_inclusion_calls(cpg, Iterator.single(method_node)).foreach(node => println(s"    ${Show.default.apply(node)}"))
-                            if found_2 then method_node.callIn.foreach(node => println(s"    ${Show.default.apply(node)}"))
-                            if found_3 then get_calls_via_callbacks(cpg, Iterable.single(method_node)).foreach(node => println(s"    ${Show.default.apply(node)}"))
-                            */
-                            println("")
-                        else 
-                            println("FOUND NO CALLS")
-                            println("")
-                    */
                 })
             })
 
