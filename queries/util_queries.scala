@@ -330,6 +330,13 @@ def due_to(cpg: Cpg, sink_nodes: Iterator[? <: AstNode], source_nodes: Iterator[
     val sink_set = sink_nodes.toSet
     val source_set = source_nodes.toSet
 
+    if sink_set.isEmpty then
+        println("No sinks given.")
+        return Iterator()
+    if source_set.isEmpty then
+        println("No sources given.")
+        return Iterator()
+
     if print then
         println("STARTING SEARCH AT SINKS:")
         sink_set.foreach(node => println(s"    ${Show.default.apply(node)}"))
