@@ -388,7 +388,8 @@ def due_to(cpg: Cpg, sink_nodes: Iterator[? <: AstNode], source_nodes: Iterator[
                         println(s"    ${Show.default.apply(method_node)}")
                     )
 
-                x.isCfgNode.method.foreach(method_node => if !visited_set.contains(method_node) then {
+                x.isCfgNode.method.foreach(method_node => 
+                    if !visited_set.contains(method_node) then 
                     // add to visited nodes
                     visited_set = visited_set ++ Set(method_node)
                     
@@ -409,7 +410,9 @@ def due_to(cpg: Cpg, sink_nodes: Iterator[? <: AstNode], source_nodes: Iterator[
                         else
                             println("FOUND NO CALLS")
                         println("")
-                })
+                    else
+                        discarded_paths = discarded_paths ++ Set(prevPath :+ method_node)
+                )
             })
 
             //println(s"search_set.size: ${new_search_set.size}" + "\n" + s"new_search_set.size: ${new_search_set.size}" + "\n" + s"diff size: ${new_search_set.map(entry => entry(0)).diff(search_set.map(entry => entry(0))).size}" + "\n" + s"discarded_paths.size: ${discarded_paths.size}")
