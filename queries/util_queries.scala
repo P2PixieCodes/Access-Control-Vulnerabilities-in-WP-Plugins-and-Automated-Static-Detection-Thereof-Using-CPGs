@@ -10,6 +10,16 @@ import io.shiftleft.semanticcpg.*
 import io.shiftleft.semanticcpg.language.*
 import flatgraph.traversal.*
 
+
+def get_calls_for_methods(cpg: Cpg, methods: Iterator[Method])(implicit callResolver: ICallResolver): Iterator[? <: AstNode] = {
+    val method_nodes = methods.toSet
+       get_inclusion_calls(cpg, method_nodes) // global file functions
+    ++ get_calls_via_variable_assignment(cpg, method_nodes) // anonymous functions
+    ++ get_calls_via_callbacks(cpg, method_nodes) // regular functions
+    ++ method_nodes.callIn // regular functions
+    ++ get_object_method_calls(cpg, method_nodes) // attempt to find unresolved function calls
+}
+
 def get_object_method_calls(cpg: Cpg, methods: Iterator[Method]): Iterator[Call] = {
     /* // PRINT STUFF
     val method_set_print = methods.toSet
