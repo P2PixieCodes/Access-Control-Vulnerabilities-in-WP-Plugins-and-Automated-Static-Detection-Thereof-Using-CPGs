@@ -195,9 +195,9 @@ def get_calls_via_callbacks(cpg: Cpg, methods: Iterator[Method]): Iterator[Call]
     
     val callback_calls = cpg.call
         // get relevant methods
-        .filter(node => callback_methods.keys.exists(_.contains(node.name)))
+        .filter(node => callback_methods.keys.exists(_.equals(node.name)))
         // filter relevant CALLs by identifying relevant METHOD-names in corresponding callbacks
-        .filter(node => node.argument(callback_methods(node.name)) // get callback
+        .filter(node => callback_methods(node.name).forall(callback_index => node.argument(callback_index) // get callback
             match { // get method name according to callback type
     
                 // "classname::methodname" as string (LITERAL) -- only possible for static methods
@@ -206,6 +206,7 @@ def get_calls_via_callbacks(cpg: Cpg, methods: Iterator[Method]): Iterator[Call]
                             name => x.code.endsWith("::" + name)
                             // TODO: also check if classname matches method's containing/inheriting TYPE_DECL
                         )
+                
                 // "methodname" as string (LITERAL)
                 case x if x.isLiteral
                     =>  method_names.exists(name => x.code.contains(name))
@@ -229,8 +230,8 @@ def get_calls_via_callbacks(cpg: Cpg, methods: Iterator[Method]): Iterator[Call]
                 // unknown type of callback ?
                 case _
                     =>  false
-            }
-        )
+
+        }))
     callback_calls
 }
 
