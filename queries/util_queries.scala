@@ -18,6 +18,16 @@ def get_calls_for_methods(cpg: Cpg, methods: Iterator[Method])(implicit callReso
     ++ get_calls_via_callbacks(cpg, method_nodes) // regular functions
     ++ method_nodes.callIn // regular functions
     ++ get_object_method_calls(cpg, method_nodes) // attempt to find unresolved function calls
+    ++ get_self_construct_call(cpg, method_nodes) // attempt to find calls to __construct functions via references to self
+}
+
+def get_self_construct_call(cpg: Cpg, methods: Iterator[Method]): Iterator[Call] = {
+    // starting with a "__construct" method, navigate to the containing TYPE_DECL and search within its static methods for a call to `self.__construct`
+    methods.name("__construct").isExternal(false).astParentType("TYPE_DECL").flatMap(start_node => 
+        start_node.astParent.asInstanceOf[TypeDecl].flatMap(node => 
+            cpg.typeDecl.name(node.name + "<metaclass>")
+        ).astOut.isMethod.ast.isCall.methodFullName("self.__construct")
+    )
 }
 
 def get_object_method_calls(cpg: Cpg, methods: Iterator[Method]): Iterator[Call] = {
