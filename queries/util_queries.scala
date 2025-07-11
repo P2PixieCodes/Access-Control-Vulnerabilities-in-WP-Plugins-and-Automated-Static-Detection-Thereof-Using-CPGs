@@ -92,9 +92,103 @@ def get_calls_via_callbacks(cpg: Cpg, methods: Iterator[Method]): Iterator[Call]
 
     // (incomplete) list of methods that take callbacks
     val callback_methods = Map(
-        "add_action" -> 2, 
-        "add_options_page" -> 5,
-        "add_submenu_page" -> 6
+        //apply_filters( ‘wp_privacy_personal_data_exporters’, array $args )
+        //apply_filters( ‘wp_privacy_personal_data_erasers’, array $args )
+        "Custom_Background::__construct" -> List(1,2),
+        "Custom_Image_Header::__construct" -> List(1,2),
+        //WP_Screen::add_help_tab( array $args ),
+        //apply_filters( ‘site_status_tests’, array[] $tests )
+        "wp_add_dashboard_widget" -> List(3,4),
+        "wp_dashboard_cached_rss_widget" -> List(2),
+        "add_option_update_handler" -> List(3),
+        "remove_option_update_handler" -> List(3),
+        "add_object_page" -> List(5),
+        "add_utility_page" -> List(5),
+        //_wp_handle_upload( array $file, array|false $overrides = false, string|null $time = null )
+        "register_importer" -> List(4),
+        "wp_iframe" -> List(1),
+        //post_submit_meta_box( WP_Post $post, array $args = array() )
+        //post_format_meta_box( WP_Post $post, array $box )
+        //post_tags_meta_box( WP_Post $post, array $box )
+        //post_categories_meta_box( WP_Post $post, array $box )
+        //wp_nav_menu_item_post_type_meta_box( string $data_object, array $box )
+        //wp_nav_menu_item_taxonomy_meta_box( string $data_object, array $box )
+        "add_menu_page" -> List(5),
+        "add_submenu_page" -> List(6),
+        "add_management_page" -> List(5),
+        "add_options_page" -> List(5),
+        "add_theme_page" -> List(5),
+        "add_plugins_page" -> List(5),
+        "add_users_page" -> List(5),
+        "add_dashboard_page" -> List(5),
+        "add_posts_page" -> List(5),
+        "add_media_page" -> List(5),
+        "add_links_page" -> List(5),
+        "add_pages_page" -> List(5),
+        "add_comments_page" -> List(5),
+        "add_meta_box" -> List(3), // !!! IS THIS WHAT ALL THE OTHER ONES TAKE THE ARRAY FOR
+        //do_block_editor_incompatible_meta_box( mixed $data_object, array $box )
+        "add_settings_section" -> List(3),
+        "add_settings_field" -> List(3),
+        //register_block_bindings_source( string $source_name, array $source_properties )
+        "apply_block_hooks_to_content" -> List(3),
+        "apply_block_hooks_to_content_from_post_object" -> List(3),
+        "make_before_block_visitor" -> List(3),
+        "make_after_block_visitor" -> List(3),
+        "traverse_and_serialize_block" -> List(2,3),
+        "traverse_and_serialize_blocks" -> List(2,3),
+        //wp_generate_tag_cloud( WP_Term[] $tags, string|array $args = '' )
+        //WP_Block_Bindings_Registry::register( string $source_name, array $source_properties )
+        //WP_Block_Type::__construct( string $block_type, array|string $args = array() )
+        //WP_Customize_Control::__construct( WP_Customize_Manager $manager, string $id, array $args = array() )
+        //WP_Customize_Panel::__construct( WP_Customize_Manager $manager, string $id, array $args = array() )
+        //WP_Customize_Section::__construct( WP_Customize_Manager $manager, string $id, array $args = array() )
+        //WP_Customize_Setting::__construct( WP_Customize_Manager $manager, string $id, array $args = array() )
+        "register_handler" -> List(3), // can only be WP_Embed::register_handler
+        "add_filter" -> List(2), // same argument index for both wp-includes/plugin.php and WP_Hook::add_filter
+        "remove_filter" -> List(2), // same argument index for both wp-includes/plugin.php and WP_Hook::remove_filter
+        "has_filter" -> List(2), // same argument index for both wp-includes/plugin.php and WP_Hook::has_filter
+        "make_image" -> List(2), // same argument index for both WP_Image_Editor_GD and WP_Image_Editor
+        //wp_list_comments( string|array $args = array(), WP_Comment[] $comments = null )
+        "register_sidebar_widget" -> List(2),
+        "register_widget_control" -> List(2),
+        "add_custom_image_header" -> List(1,2,3),
+        "add_custom_background" -> List(1,2,3),
+        "wp_embed_register_handler" -> List(3),
+        "map_deep" -> List(2),
+        "wp_unique_filename" -> List(3),
+        //apply_filters( ‘wp_unique_filename’, string $filename, string $ext, string $dir, callable|null $unique_filename_callback, string[] $alt_filenames, int|string $number )
+        "wp_find_hierarchy_loop" -> List(1),
+        "wp_find_hierarchy_loop_tortoise_hare" -> List(1),
+        //register_meta( string $object_type, string $meta_key, array $args, string|array $deprecated = null )
+        //wp_nav_menu( array $args = array() )
+        //register_setting( string $option_group, string $option_name, array $args = array() )
+        "unregister_setting" -> List(3),
+        "add_action" -> List(2),
+        "has_action" -> List(2),
+        "remove_action" -> List(2),
+        "register_activation_hook" -> List(2),
+        "register_deactivation_hook" -> List(2),
+        "register_uninstall_hook" -> List(2),
+        "_wp_filter_build_unique_id" -> List(2),
+        //register_post_type( string $post_type, array|string $args = array() )
+        //register_rest_field( string|array $object_type, string $attribute, array $args = array() )
+        "add_feed" -> List(2),
+        "add_shortcode" -> List(2),
+        //register_taxonomy( string $taxonomy, array|string $object_type, array|string $args = array() )
+        //register_theme_feature( string $feature, array $args = array() )
+        "wp_register_sidebar_widget" -> List(3),
+        "wp_register_widget_control" -> List(3),
+        "_register_widget_update_callback" -> List(2),
+        "_register_widget_form_callback" -> List(3),
+        //do_action( ‘dynamic_sidebar’, array $widget )
+        "is_active_widget" -> List(1),
+        //WP_Customize_Partial::__construct( WP_Customize_Selective_Refresh $component, string $id, array $args = array() )
+        //WP_Font_Utils::sanitize_from_schema( array $tree, array $schema )
+        "WP_Font_Utils::apply_sanitizer" -> List(2),
+        "WP_HTML_Token::__construct" -> List(4),
+        "FilteredIterator::__construct" -> List(2),
+        //apply_filters( ‘widget_nav_menu_args’, array $nav_menu_args, WP_Term $nav_menu, array $args, array $instance )
     )
 
     val callback_calls_wip = cpg.call.filter(node => callback_methods.keys.exists(_.contains(node.name))).l
