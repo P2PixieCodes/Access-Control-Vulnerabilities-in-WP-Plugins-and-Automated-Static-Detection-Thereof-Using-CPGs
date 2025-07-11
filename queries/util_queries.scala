@@ -353,6 +353,7 @@ def due_to(cpg: Cpg, sink_nodes: Iterator[? <: AstNode], source_nodes: Iterator[
             // SEARCH for direct CFG connection: execution of source node can lead to execution of target node within the same method
             var found_source_set: Set[? <: AstNode] = Set()
             search_set.foreach((x,prevPath) => {
+                if !source_set.contains(x) then 
                 x.isCfgNode.dominatedBy.foreach(y => { 
                     if source_set.contains(y) then {
                         // add last "due to" connection to result
@@ -362,6 +363,11 @@ def due_to(cpg: Cpg, sink_nodes: Iterator[? <: AstNode], source_nodes: Iterator[
                         if print then println("FOUND - SEE RESULT")
                     }
                 })
+                else 
+                    // technically possible if the given sources are calls of an internal method
+                    result.add(prevPath)
+                    found_source_set = found_source_set ++ Set(x)
+                    if print then println("FOUND - SEE RESULT")
             })
             
             search_set = search_set.filter(entry =>
