@@ -329,7 +329,7 @@ def due_to(cpg: Cpg, sink_nodes: Iterator[? <: AstNode], source_nodes: Iterator[
     // keep track of already visited search nodes to prevent potential loops
     var visited_set: Set[? <: AstNode] = Set()
     // keep track of "discarded" paths in order to later check if their last node is contained in any successfully followed paths
-    var discarded_paths: Set[List[? <: AstNode]] = Set() // TODO
+    var discarded_paths: Set[List[? <: AstNode]] = Set()
 
     breakable {
         while search_set.size > 0 do
