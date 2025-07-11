@@ -315,7 +315,7 @@ def is_part_of_condition(cpg: Cpg, relevant_nodes: Iterator[? <: AstNode]): Iter
   * @return
   *     to be decided ...
   */
-def due_to(cpg: Cpg, sink_nodes: Iterator[? <: AstNode], source_nodes: Iterator[? <: AstNode], print: Boolean = false)(implicit callResolver: ICallResolver)/*: Set[List[? <: AstNode]]*/ = {
+def due_to(cpg: Cpg, sink_nodes: Iterator[? <: AstNode], source_nodes: Iterator[? <: AstNode], print: Boolean = false)(implicit callResolver: ICallResolver): Iterator[List[? <: AstNode]] = {
     // save as sets for reusability
     val sink_set = sink_nodes.toSet
     val source_set = source_nodes.toSet
