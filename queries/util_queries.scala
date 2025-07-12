@@ -11,6 +11,18 @@ import io.shiftleft.semanticcpg.language.*
 import flatgraph.traversal.*
 
 
+/**
+  * Given a collection of methods, attempt to get all calls thereof.
+  *
+  * @param cpg
+  *     the CPG instance
+  * @param methods
+  *     an `Iterator[Method]` with methods which may or may not be called in a variety of ways
+  * @param callResolver (implicit)
+  *     required for successful compilation
+  * @return
+  *     an `Iterator[Call]` with matching calls
+  */
 def get_calls_for_methods(cpg: Cpg, methods: Iterator[Method])(implicit callResolver: ICallResolver): Iterator[Call] = {
     val method_nodes = methods.toSet
        get_inclusion_calls(cpg, method_nodes) // global file functions
@@ -21,6 +33,16 @@ def get_calls_for_methods(cpg: Cpg, methods: Iterator[Method])(implicit callReso
     ++ get_self_construct_call(cpg, method_nodes) // attempt to find calls to __construct functions via references to self
 }
 
+/**
+  * Given a collection of classes' `__construct` methods, attempt to get all calls from within static methods of the class.
+  *
+  * @param cpg
+  *     the CPG instance
+  * @param methods
+  *     an `Iterator[Method]` which may contain `__construct` methods
+  * @return
+  *     an `Iterator[Call]` with matching calls
+  */
 def get_self_construct_call(cpg: Cpg, methods: Iterator[Method]): Iterator[Call] = {
     // starting with a "__construct" method, navigate to the containing TYPE_DECL and search within its static methods for a call to `self.__construct`
     methods.name("__construct").isExternal(false).astParentType("TYPE_DECL").flatMap(start_node => 
@@ -30,8 +52,20 @@ def get_self_construct_call(cpg: Cpg, methods: Iterator[Method]): Iterator[Call]
     )
 }
 
+/**
+  * Given a collection of methods, attempt to get all calls via object instances.
+  * 
+  * (Note: this does not evaluate the calling object's type. May return calls to identically named methods of other classes.)
+  *
+  * @param cpg
+  *     the CPG instance
+  * @param methods
+  *     an `Iterator[Method]` with methods which may or may not be called via object instances.
+  * @return
+  *     an `Iterator[Call]` with matching calls
+  */
 def get_object_method_calls(cpg: Cpg, methods: Iterator[Method]): Iterator[Call] = {
-    /* // PRINT STUFF
+    /* // PRINT STUFF FOR DEVS
     val method_set_print = methods.toSet
     println("\nMETHODS")
     method_set_print.foreach(node => println(s"    ${node.fullName}\n    ---- ${node.code}"))
@@ -45,15 +79,16 @@ def get_object_method_calls(cpg: Cpg, methods: Iterator[Method]): Iterator[Call]
 }
 
 /**
-  * Given a file <global> method, get all includes/requires of the corresponding file.
+  * Given a collection of files' <global> methods, attempt to get all includes/requires of the corresponding files.
+  * 
+  * (Note: this does not evaluate expressions. May return inclusions to identically named files in other directories. Will miss inclusions of dynamically generated filenames.)
   *
   * @param cpg
   *     the CPG instance
   * @param methods
   *     an `Iterator[Method]` which may or may not contain `filename.php:<global>` methods
   * @return 
-  *     an `Iterator[Call]` of `include`/`require` statements corresponding to any `<global>` methods; 
-  *     if there are no `<global>` methods, the iterator is empty
+  *     an `Iterator[Call]` of `include`/`require` calls corresponding to any `<global>` methods
   */
 def get_inclusion_calls(cpg: Cpg, methods: Iterator[Method]): Iterator[Call] = {
 
@@ -62,10 +97,10 @@ def get_inclusion_calls(cpg: Cpg, methods: Iterator[Method]): Iterator[Call] = {
     
     val all_file_calls = cpg.call.or(_.name("include"),_.name("include_once"),_.name("require"),_.name("require_once")).l
 
-    // we assume that the entire filename is passed as a string literal to the statement
+    // we assume that the filename is passed as a string literal to the statement
     def relevant_file_calls = all_file_calls.iterator.filter(node => file_methods.iterator.exists(method_node => { 
-        node.code.contains(method_node.filename)
-        || node.code.contains(method_node.filename.substring(method_node.filename.lastIndexOf("/")+1)) // case where the filename without path is passed
+        node.code.contains(method_node.filename) // case where the entire filename is passed
+        || node.code.contains(method_node.filename.substring(method_node.filename.lastIndexOf("/")+1)) // case where the filename without path is passed -> might return some false positives
     }))
 
     // TODO: case where the filename/path is dynamically constructed
@@ -92,10 +127,10 @@ def get_entry_method(cpg: Cpg, file_name: String): Iterator[Method] = {
 /**
   * Filter the given nodes for those that are reachable within the method.
   * 
-  * (Note: this does not check for unreachable code due to always-false conditions)
+  * (Note: this does not evaluate expressions to discover unreachable code due to always-false conditions)
   *
   * @param nodes
-  *     an `Iterator[? <: AstNode]`
+  *     an `Iterator[? <: AstNode]` of nodes which may or may not be part of a CFG
   * @return
   *     an `Iterator[? <: AstNode]` which contains only those nodes that are reachable
   */
@@ -111,7 +146,7 @@ def is_part_of_containing_methods_execution(nodes: Iterator[? <: AstNode]): Iter
 }
 
 /**
-  * Finds callback uses of the given methods.
+  * Given a collection of methods, attempt to get all uses thereof as callbacks.
   *
   * @param cpg
   *     the CPG instance
@@ -275,7 +310,9 @@ def get_calls_via_callbacks(cpg: Cpg, methods: Iterator[Method]): Iterator[Call]
 }
 
 /**
-  * Finds calls of methods which were defined via anonymous function variable assignment.
+  * (INCOMPLETE)
+  * 
+  * Given a collection of `<lambda>` methods (which were defined via anonymous function variable assignment), attempt to get all calls thereof.
   *
   * @param cpg
   *     the CPG instance
@@ -309,7 +346,7 @@ def is_part_of_condition(cpg: Cpg, relevant_nodes: Iterator[? <: AstNode]): Iter
 }
 
 /**
-  * Finds paths by which execution of any source node may lead to execution of any sink node.
+  * Find control flow paths by which execution of any source node may lead to execution of any sink node.
   * 
   * (Note: this does not evaluate expressions)
   *
@@ -320,10 +357,11 @@ def is_part_of_condition(cpg: Cpg, relevant_nodes: Iterator[? <: AstNode]): Iter
   * @param source_nodes
   *     an `Iterator[? <: AstNode]` of source nodes
   * @param print (optional - default: false)
+  *     a `Boolean` flag controls whether path search is printed to output
   * @param callResolver (implicit)
   *     required for successful compilation
   * @return
-  *     to be decided ...
+  *     an `Iterator[List[? <: AstNode]]` collection of paths
   */
 def due_to(cpg: Cpg, sink_nodes: Iterator[? <: AstNode], source_nodes: Iterator[? <: AstNode], print: Boolean = false)(implicit callResolver: ICallResolver): Iterator[List[? <: AstNode]] = {
     // save as sets for reusability
@@ -489,7 +527,22 @@ def due_to(cpg: Cpg, sink_nodes: Iterator[? <: AstNode], source_nodes: Iterator[
 
 }
 
-
+/**
+  * Find control flow paths by which any call of `is_admin` may lead to execution of any sink node.
+  * 
+  * (Note: this does not evaluate expressions)
+  *
+  * @param cpg
+  *     the CPG instance
+  * @param sink_nodes
+  *     an `Iterator[? <: AstNode]` of sink nodes
+  * @param print (optional - default false)
+  *     a `Boolean` flag controls whether path search is printed to output
+  * @param callResolver (implicit)
+  *     required for successful compilation
+  * @return 
+  *     an `Iterator[List[? <: AstNode]]` collection of paths
+  */
 def due_to_is_admin(cpg: Cpg, sink_nodes: Iterator[? <: AstNode], print: Boolean = false)(implicit callResolver: ICallResolver): Iterator[List[? <: AstNode]] = {
     due_to(cpg, sink_nodes, cpg.call.name("is_admin"), print)
 }
