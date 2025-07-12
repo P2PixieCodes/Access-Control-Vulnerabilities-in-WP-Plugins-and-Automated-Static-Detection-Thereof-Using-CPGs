@@ -75,7 +75,12 @@ def get_object_method_calls(cpg: Cpg, methods: Iterator[Method]): Iterator[Call]
     cpg.call.filter(call => method_set_print.exists(method => call.code.contains(s"->${method.name}") && call.methodFullName.endsWith(method.name))).foreach(call => println(s"    `${call.code}` calls ${call.methodFullName} in line ${call.lineNumber}\n    ---- in method: ${call.method.fullName}"))
     */
     val method_set = methods.toSet
-    cpg.call.filter(call => method_set.exists(method => call.code.contains(s"->${method.name}") && call.methodFullName.endsWith(method.name)))
+    cpg.call.filter(call => 
+        method_set.exists(method => 
+            call.code.contains(s"->${method.name}") && 
+            call.methodFullName.endsWith(method.name)
+        )
+    )
 }
 
 /**
