@@ -309,9 +309,9 @@ def is_part_of_condition(cpg: Cpg, relevant_nodes: Iterator[? <: AstNode]): Iter
 }
 
 /**
-  * Finds paths by which execution of any source node may lead to execution of any sink node (after execution of any intermediaries).
+  * Finds paths by which execution of any source node may lead to execution of any sink node.
   * 
-  * (Note: this does not evaluate expressions in conditions of control structures)
+  * (Note: this does not evaluate expressions)
   *
   * @param cpg
   *     the CPG instance
