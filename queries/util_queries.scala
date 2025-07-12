@@ -96,20 +96,18 @@ def get_object_method_calls(cpg: Cpg, methods: Iterator[Method]): Iterator[Call]
   *     an `Iterator[Call]` of `include`/`require` calls corresponding to any `<global>` methods
   */
 def get_inclusion_calls(cpg: Cpg, methods: Iterator[Method]): Iterator[Call] = {
-
     // we assume that files' global methods are named `filename.php:<global>`
-    val file_methods = methods.filter(_.name.contains("<global>")).l // fsr this has to be a list - if it's an iterator, it doesn't want to work?
-    
-    val all_file_calls = cpg.call.or(_.name("include"),_.name("include_once"),_.name("require"),_.name("require_once")).l
+    val file_methods = methods.filter(_.name.contains("<global>")).toSet
 
+    val all_file_calls = cpg.call.or(_.name("include"),_.name("include_once"),_.name("require"),_.name("require_once"))
     // we assume that the filename is passed as a string literal to the statement
-    def relevant_file_calls = all_file_calls.iterator.filter(node => file_methods.iterator.exists(method_node => { 
-        node.code.contains(method_node.filename) // case where the entire filename is passed
-        || node.code.contains(method_node.filename.substring(method_node.filename.lastIndexOf("/")+1)) // case where the filename without path is passed -> might return some false positives
-    }))
-
+    def relevant_file_calls = all_file_calls.filter(node => 
+        file_methods.exists(method_node => { 
+            node.code.contains(method_node.filename) // case where the entire filename is passed
+            || node.code.contains(method_node.filename.substring(method_node.filename.lastIndexOf("/")+1)) // case where the filename without path is passed -> might return some false positives
+        })
+    )
     // TODO: case where the filename/path is dynamically constructed
-    
     relevant_file_calls
 }
 
