@@ -11,7 +11,7 @@ import io.shiftleft.semanticcpg.language.*
 import flatgraph.traversal.*
 
 
-def get_calls_for_methods(cpg: Cpg, methods: Iterator[Method])(implicit callResolver: ICallResolver): Iterator[? <: AstNode] = {
+def get_calls_for_methods(cpg: Cpg, methods: Iterator[Method])(implicit callResolver: ICallResolver): Iterator[Call] = {
     val method_nodes = methods.toSet
        get_inclusion_calls(cpg, method_nodes) // global file functions
     ++ get_calls_via_variable_assignment(cpg, method_nodes) // anonymous functions
