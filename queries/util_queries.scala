@@ -490,44 +490,44 @@ def due_to(cpg: Cpg, sink_nodes: Iterator[? <: AstNode], source_nodes: Iterator[
 
     // print result
     var counter: Int = 1
-    if result.toSet.size > 0 then
-        result.toSet.foreach(list => {
-            println(s"Path $counter")
-            list.map(node => node match 
-                case x: io.shiftleft.codepropertygraph.generated.nodes.Call if sink_set.contains(x) => 
-                    s"        start: ${x.code}" + "\n" +
-                    //s"               |" + "\n" +
-                    s"             ├── call name: ${x.name}" + "\n" +
-                    s"             └── in line: ${x.lineNumber}"
-                case x if sink_set.contains(x) => 
-                    s"        start: ${x.code}" + "\n" +
-                    //s"               |" + "\n" +
-                    s"             └── in line: ${x.lineNumber}"
-                case x: io.shiftleft.codepropertygraph.generated.nodes.Call if source_set.contains(x) =>
-                    s"        found: ${x.code}" + "\n" +
-                    //s"               |" + "\n" +
-                    s"             ├── in line: ${x.lineNumber}" + "\n" +
-                    s"             ├──── in method: ${x.method.code}" + "\n" +
-                    s"             └────── in file: ${x.method.filename}"
-                case x: io.shiftleft.codepropertygraph.generated.nodes.Call if x.isCall => 
-                    s"    called by: ${x.code}" + "\n" +
-                    s"             ├── call name: ${x.name}" + "\n" +
-                    s"             └── in line: ${x.lineNumber}"
-                case x: io.shiftleft.codepropertygraph.generated.nodes.Method if x.isMethod => 
-                    s"    in method: ${x.code}" + "\n" +
-                    //s"               |" + "\n" +
-                    s"             └── in file: ${x.filename}"
-                case _ => 
-                    s"        found: ${node.code}"
-            ).foreach(content => println(content))
-            println("")
-            counter += 1
-        })
-    else
-        println("No paths found!")
+    if print then 
+        if result.toSet.size > 0 then
+            result.toSet.foreach(list => {
+                println(s"Path $counter")
+                list.map(node => node match 
+                    case x: io.shiftleft.codepropertygraph.generated.nodes.Call if sink_set.contains(x) => 
+                        s"        start: ${x.code}" + "\n" +
+                        //s"               |" + "\n" +
+                        s"             ├── call name: ${x.name}" + "\n" +
+                        s"             └── in line: ${x.lineNumber}"
+                    case x if sink_set.contains(x) => 
+                        s"        start: ${x.code}" + "\n" +
+                        //s"               |" + "\n" +
+                        s"             └── in line: ${x.lineNumber}"
+                    case x: io.shiftleft.codepropertygraph.generated.nodes.Call if source_set.contains(x) =>
+                        s"        found: ${x.code}" + "\n" +
+                        //s"               |" + "\n" +
+                        s"             ├── in line: ${x.lineNumber}" + "\n" +
+                        s"             ├──── in method: ${x.method.code}" + "\n" +
+                        s"             └────── in file: ${x.method.filename}"
+                    case x: io.shiftleft.codepropertygraph.generated.nodes.Call if x.isCall => 
+                        s"    called by: ${x.code}" + "\n" +
+                        s"             ├── call name: ${x.name}" + "\n" +
+                        s"             └── in line: ${x.lineNumber}"
+                    case x: io.shiftleft.codepropertygraph.generated.nodes.Method if x.isMethod => 
+                        s"    in method: ${x.code}" + "\n" +
+                        //s"               |" + "\n" +
+                        s"             └── in file: ${x.filename}"
+                    case _ => 
+                        s"        found: ${node.code}"
+                ).foreach(content => println(content))
+                println("")
+                counter += 1
+            })
+        else
+            println("No paths found!")
 
     result.toSet.iterator
-
 }
 
 /**
