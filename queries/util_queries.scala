@@ -262,8 +262,6 @@ def get_calls_via_callbacks(cpg: Cpg, methods: Iterator[Method]): Iterator[Call]
         "FilteredIterator::__construct" -> List(2),
         //apply_filters( ‘widget_nav_menu_args’, array $nav_menu_args, WP_Term $nav_menu, array $args, array $instance )
     )
-
-    val callback_calls_wip = cpg.call.filter(node => callback_methods.keys.exists(_.contains(node.name))).l
     
     val callback_calls = cpg.call
         // get relevant methods
