@@ -14,7 +14,8 @@ SINKS
 includes/page-admin-counters.php:111:15
 └── `submit_button()` submits form with unsanitised input
 */
-def plugin_00 = due_to(cpg, cpg.call.name("submit_button"), cpg.call.name("is_admin")).l
+def plugin_00 = due_to_is_admin(cpg, cpg.call.name("submit_button"))
+//check_paths_for_capability_checks(cpg, cpg.call.name("submit_button"), cpg.call.name("is_admin"))
 /* QUERY RESULT AS OF 11.07.2025 15:56
 
 joern> due_to(cpg, cpg.call.name("submit_button"), cpg.call.name("is_admin"))
@@ -50,6 +51,11 @@ val res5:
   Iterator[List[? <: io.shiftleft.codepropertygraph.generated.nodes.AstNode]] = non-empty iterator
 */
 
+def foo_00 = "bar"
+
+
+
+
 /* 3com-asesor-de-cookies
 SINKS
 html/admin/principal.html:386:29
@@ -61,7 +67,8 @@ Joern's php2cpg does not parse `*.html` files.
     Thus, the actual sink cannot be queried.
     Instead, attempt to find any calls referencing `principal.html` and use those as sinks.
 */
-def plugin_01 = due_to(cpg, cpg.call.filter(_.code.contains("principal.html")), cpg.call.name("is_admin")).l
+def plugin_01 = due_to_is_admin(cpg, cpg.call.filter(_.code.contains("principal.html")))
+//check_paths_for_capability_checks(cpg, cpg.call.filter(_.code.contains("principal.html")), cpg.call.name("is_admin"))
 /* QUERY RESULT AS OF 11.07.2025 15:57
 
 joern> due_to(cpg, cpg.call.filter(_.code.contains("principal.html")), cpg.call.name("is_admin"))
@@ -141,6 +148,11 @@ val res3:
   Iterator[List[? <: io.shiftleft.codepropertygraph.generated.nodes.AstNode]] = non-empty iterator
 */
 
+def foo_01 = "bar"
+
+
+
+
 /* 404-solution.2.34.0
 
 SINKS
@@ -155,8 +167,10 @@ Didn't bother to follow data-flow to ensure that the calls are related.
 def plugin_02 = List(
     //due_to(cpg, cpg.call.name("get_results"), cpg.call.name("is_admin")),
     due_to(cpg, cpg.call.name("get_results"), get_calls_for_methods(cpg, cpg.method.name("getRedirectsForViewQuery"))),
-    due_to(cpg, get_calls_for_methods(cpg, cpg.method.name("getRedirectsForViewQuery")), cpg.call.name("is_admin"))
+    due_to_is_admin(cpg, get_calls_for_methods(cpg, cpg.method.name("getRedirectsForViewQuery")))
 )
+//check_paths_for_capability_checks(cpg, cpg.call.name("get_results"), get_calls_for_methods(cpg, cpg.method.name("getRedirectsForViewQuery")))
+//check_paths_for_capability_checks(cpg, get_calls_for_methods(cpg, cpg.method.name("getRedirectsForViewQuery")), cpg.call.name("is_admin"))
 /* RESULT AS OF 11.07.2025 16:30
 
 joern> due_to(cpg, cpg.call.name("get_results"), get_calls_for_methods(cpg, cpg.method.name("getRedirectsForViewQuery")))
@@ -451,6 +465,11 @@ val res8:
   Iterator[List[? <: io.shiftleft.codepropertygraph.generated.nodes.AstNode]] = non-empty iterator
 */
 
+def foo_02 = "bar"
+
+
+
+
 /* 404-solution.2.35.7
 
 SINKS
@@ -462,8 +481,10 @@ includes/DataAccess.php
 def plugin_03 = List(
     //due_to(cpg, cpg.call.name("get_results"), cpg.call.name("is_admin")),
     due_to(cpg, cpg.call.name("get_results"), get_calls_for_methods(cpg, cpg.method.name("getLogRecords"))),
-    due_to(cpg, get_calls_for_methods(cpg, cpg.method.name("getLogRecords")), cpg.call.name("is_admin"))
+    due_to_is_admin(cpg, get_calls_for_methods(cpg, cpg.method.name("getLogRecords")))
 )
+//check_paths_for_capability_checks(cpg, cpg.call.name("get_results"), get_calls_for_methods(cpg, cpg.method.name("getLogRecords")))
+//check_paths_for_capability_checks(cpg, get_calls_for_methods(cpg, cpg.method.name("getLogRecords")), cpg.call.name("is_admin"))
 /* RESULT AS OF 11.07.2025 16:43
 
 joern> due_to(cpg, cpg.call.name("get_results"), get_calls_for_methods(cpg, cpg.method.name("getLogRecords")))
@@ -551,6 +572,11 @@ val res12:
   Iterator[List[? <: io.shiftleft.codepropertygraph.generated.nodes.AstNode]] = non-empty iterator
 */
 
+def foo_03 = "bar"
+
+
+
+
 /* accelerated-mobile-pages.1.0.77.31
 
 SINKS
@@ -581,6 +607,7 @@ def plugin_04 = List(
     //due_to_is_admin(cpg, cpg.call.filter(_.code.contains("Enter HTML in Body (beginning of body tag)"))),
     due_to(cpg, cpg.call.filter(_.code.contains("savePagebuilderSettings")), get_calls_for_methods(cpg, cpg.method.name("ampforwp_include_options_file")))
 )
+//check_paths_for_capability_checks(cpg, cpg.call.filter(_.code.contains("savePagebuilderSettings")), get_calls_for_methods(cpg, cpg.method.name("ampforwp_include_options_file")))
 /* RESULT AS OF 11.07.2025 17:50
 
 joern> due_to_is_admin(cpg, cpg.call.filter(_.code.contains("savePagebuilderSettings")))
@@ -935,6 +962,7 @@ Path 1
 val res4:
   Iterator[List[? <: io.shiftleft.codepropertygraph.generated.nodes.AstNode]] = non-empty iterator
 */
+def foo_04 = " ^^^ USING `is_admin` CALLS AS SOURCES"
 /* RESULT AS OF 11.07.2025 18:04
 
 joern> due_to(cpg, cpg.call.filter(_.code.contains("savePagebuilderSettings")), get_calls_for_methods(cpg, cpg.method.name("ampforwp_include_options_file")))
@@ -1181,6 +1209,8 @@ Path 5
 val res5:
   Iterator[List[? <: io.shiftleft.codepropertygraph.generated.nodes.AstNode]] = non-empty iterator
 */
+def foo_04a = " ^^^ USING `ampforwp_include_options_file`-CALLS AS SOURCES"
+
 
 /* accelerated-mobile-pages.1.0.77.32
 
@@ -1196,6 +1226,7 @@ def plugin_05 = List(
     //due_to_is_admin(cpg, cpg.call.filter(_.code.contains("Enter HTML in Body (beginning of body tag)"))),
     due_to(cpg, cpg.call.filter(_.code.contains("savePagebuilderSettings")), get_calls_for_methods(cpg, cpg.method.name("ampforwp_include_options_file")))
 )
+//check_paths_for_capability_checks(cpg, cpg.call.filter(_.code.contains("savePagebuilderSettings")), get_calls_for_methods(cpg, cpg.method.name("ampforwp_include_options_file")))
 /* RESULT AS OF 11.07.2025 18:50
 
 joern> due_to_is_admin(cpg, cpg.call.filter(_.code.contains("savePagebuilderSettings")))
@@ -1803,6 +1834,12 @@ val res8:
   Iterator[List[? <: io.shiftleft.codepropertygraph.generated.nodes.AstNode]] = non-empty iterator
 */
 
+def foo_05 = "bar"
+
+
+
+
+
 /* accordions-or-faqs.2.0.3
 
 SINKS
@@ -1810,6 +1847,7 @@ Includes/Settings.php:100
 └── input element with `id="accordions_or_faqs_license_key"`
 */
 def plugin_06 = due_to_is_admin(cpg, cpg.call.name("echo").filter(_.code.contains("accordions_or_faqs_license_key")))
+//check_paths_for_capability_checks(cpg, cpg.call.name("echo").filter(_.code.contains("accordions_or_faqs_license_key")), cpg.call.name("is_admin"))
 /* RESULT AS OF 11.07.2025 18:59
 
 joern> due_to_is_admin(cpg, cpg.call.name("echo").filter(_.code.contains("accordions_or_faqs_license_key")))
@@ -1851,6 +1889,11 @@ val res5:
   Iterator[List[? <: io.shiftleft.codepropertygraph.generated.nodes.AstNode]] = non-empty iterator
 */
 
+def foo_06 = "bar"
+
+
+
+
 /* aco-product-labels-for-woocommerce.1.5.8
 
 SINKS
@@ -1869,6 +1912,7 @@ The file inclusions are dynamically generated from arguments.
     Instead, we rely on the fact that manual investigation of the vulnerability identified the inclusions via `ACOPLW_Backend::view` as relevant.
 */
 def plugin_07 = due_to_is_admin(cpg, get_calls_for_methods(cpg, cpg.method.fullName("ACOPLW_Backend<metaclass>.view")))
+//check_paths_for_capability_checks(cpg, get_calls_for_methods(cpg, cpg.method.fullName("ACOPLW_Backend<metaclass>.view")), cpg.call.name("is_admin"))
 /* RESULT AS OF 11.07.2025 20:09
 
 joern> due_to_is_admin(cpg, get_calls_for_methods(cpg, cpg.method.fullName("ACOPLW_Backend<metaclass>.view")))
@@ -1978,6 +2022,11 @@ val res1:
   Iterator[List[? <: io.shiftleft.codepropertygraph.generated.nodes.AstNode]] = non-empty iterator
 */
 
+def foo_07 = "bar"
+
+
+
+
 /* add-to-any.1.7.45
 
 SINKS
@@ -1986,8 +2035,10 @@ addtoany.admin.php
 */
 def plugin_08 = List(
     due_to_is_admin(cpg, cpg.call.name("echo").filter(_.code.contains("A2A_SHARE_SAVE_header"))),
-    due_to_is_admin(cpg,cpg.call.name("echo").filter(_.code.contains("""<input class=\"button-primary\" type=\"submit\" name=\"Submit\" value=\"""")))
+    due_to_is_admin(cpg, cpg.call.name("echo").filter(_.code.contains("""<input class=\"button-primary\" type=\"submit\" name=\"Submit\" value=\"""")))
 )
+//check_paths_for_capability_checks(cpg, cpg.call.name("echo").filter(_.code.contains("A2A_SHARE_SAVE_header")), cpg.call.name("is_admin"))
+//check_paths_for_capability_checks(cpg, cpg.call.name("echo").filter(_.code.contains("""<input class=\"button-primary\" type=\"submit\" name=\"Submit\" value=\"""")), cpg.call.name("is_admin"))
 /* RESULT AS OF 11.07.2025 20:32
 
 joern> due_to_is_admin(cpg, cpg.call.name("echo").filter(_.code.contains("A2A_SHARE_SAVE_header")))
@@ -2037,6 +2088,11 @@ val res9:
   Iterator[List[? <: io.shiftleft.codepropertygraph.generated.nodes.AstNode]] = non-empty iterator
 */
 
+def foo_08 = "bar"
+
+
+
+
 /* add-to-any.1.7.47
 
 SINKS
@@ -2045,8 +2101,10 @@ addtoany.admin.php
 */
 def plugin_09 = List(
     due_to_is_admin(cpg, cpg.call.name("echo").filter(_.code.contains("A2A_SHARE_SAVE_button_custom"))),
-    due_to_is_admin(cpg,cpg.call.name("echo").filter(_.code.contains("""<input class=\"button-primary\" type=\"submit\" name=\"Submit\" value=\"""")))
+    due_to_is_admin(cpg, cpg.call.name("echo").filter(_.code.contains("""<input class=\"button-primary\" type=\"submit\" name=\"Submit\" value=\"""")))
 )
+//check_paths_for_capability_checks(cpg, cpg.call.name("echo").filter(_.code.contains("A2A_SHARE_SAVE_button_custom")), cpg.call.name("is_admin"))
+//check_paths_for_capability_checks(cpg, cpg.call.name("echo").filter(_.code.contains("""<input class=\"button-primary\" type=\"submit\" name=\"Submit\" value=\"""")), cpg.call.name("is_admin"))
 /* RESULT AS OF 11.07.2025 20:40
 
 joern> due_to_is_admin(cpg, cpg.call.name("echo").filter(_.code.contains("A2A_SHARE_SAVE_button_custom")))
@@ -2073,6 +2131,11 @@ val res12:
   Iterator[List[? <: io.shiftleft.codepropertygraph.generated.nodes.AstNode]] = non-empty iterator
 */
 
+def foo_09 = "bar"
+
+
+
+
 /* add-to-feedly.1.2.11
 
 SINKS
@@ -2080,6 +2143,7 @@ addtofeedly.php
 └── `submit_button()` (line 80) submits form with unsanitised input (line 55)
 */
 def plugin_10 = due_to_is_admin(cpg, cpg.call.name("submit_button"))
+//check_paths_for_capability_checks(cpg, cpg.call.name("submit_button"), cpg.call.name("is_admin"))
 /* RESULT AS OF
 
 joern> due_to_is_admin(cpg, cpg.call.name("submit_button"))
@@ -2106,6 +2170,11 @@ val res15:
   Iterator[List[? <: io.shiftleft.codepropertygraph.generated.nodes.AstNode]] = non-empty iterator
 */
 
+def foo_10 = "bar"
+
+
+
+
 /* add-whatsapp-button.2.1.7
 
 SINKS
@@ -2113,6 +2182,7 @@ admin/settings.php:335
 └── uses `sanitize_text_field()` to set content of `value` attribute
 */
 def plugin_11 = due_to_is_admin(cpg, cpg.call.name("sanitize_text_field"))
+//check_paths_for_capability_checks(cpg, cpg.call.name("sanitize_text_field"), cpg.call.name("is_admin"))
 /* RESULT AS OF 11.07.2025 20:50
 
 joern> due_to_is_admin(cpg, cpg.call.name("sanitize_text_field"))
@@ -2254,6 +2324,11 @@ val res19:
   Iterator[List[? <: io.shiftleft.codepropertygraph.generated.nodes.AstNode]] = non-empty iterator
 */
 
+def foo_11 = "bar"
+
+
+
+
 /* ad-injection.1.2.0.19
 
 SINKS
@@ -2265,6 +2340,8 @@ def plugin_12 = List(
     due_to_is_admin(cpg, cpg.call.name("echo").filter(_.code.contains("""<textarea name=\"ad_code_top_1\""""))),
     due_to_is_admin(cpg, cpg.call.name("_e").filter(_.code.contains("Save all settings")))
 )
+//check_paths_for_capability_checks(cpg, cpg.call.name("echo").filter(_.code.contains("""<textarea name=\"ad_code_top_1\"""")), cpg.call.name("is_admin"))
+//check_paths_for_capability_checks(cpg, cpg.call.name("_e").filter(_.code.contains("Save all settings")), cpg.call.name("is_admin"))
 /* RESULT AS OF 11.07.2025 21:05
 
 joern> due_to_is_admin(cpg, cpg.call.name("echo").filter(_.code.contains("""<textarea name=\"ad_code_top_1\"""")))
