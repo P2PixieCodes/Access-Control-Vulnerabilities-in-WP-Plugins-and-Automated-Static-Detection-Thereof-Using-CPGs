@@ -364,7 +364,7 @@ def is_part_of_condition(cpg: Cpg, relevant_nodes: Iterator[? <: AstNode]): Iter
   * @return
   *     an `Iterator[List[? <: AstNode]]` collection of paths
   */
-def due_to(cpg: Cpg, sink_nodes: Iterator[? <: AstNode], source_nodes: Iterator[? <: AstNode], print: Boolean = false)(implicit callResolver: ICallResolver): Iterator[List[? <: AstNode]] = {
+def due_to(cpg: Cpg, sink_nodes: Iterator[? <: AstNode], source_nodes: Iterator[? <: AstNode], print: Boolean = false, printResults: Boolean = true)(implicit callResolver: ICallResolver): Iterator[List[? <: AstNode]] = {
     // save as sets for reusability
     val sink_set = sink_nodes.toSet
     val source_set = source_nodes.toSet
@@ -415,24 +415,25 @@ def due_to(cpg: Cpg, sink_nodes: Iterator[? <: AstNode], source_nodes: Iterator[
                             // add last "due to" connection to result
                             result.add(prevPath :+ y)
                             // remove node `x` from further searches in current loop
-                            found_source_set = found_source_set ++ Set(x) // for some reason, using `+` or `incl` for single element does not compile
+                            //found_source_set = found_source_set ++ Set(x) // for some reason, using `+` or `incl` for single element does not compile//08.08. CHANGE
                             if print then println("FOUND - SEE RESULT")
                         }
                     })
                 else 
                     // technically possible if the given sources are calls of an internal method
                     result.add(prevPath)
-                    found_source_set = found_source_set ++ Set(x)
+                    //found_source_set = found_source_set ++ Set(x)//08.08. CHANGE
                     if print then println("FOUND - SEE RESULT")
             })
             
             search_set = search_set.filter(entry =>
-                // no direct CFG connection -> remaining consequence nodes may be part of *methods* that are called "due to" a source node
-                !found_source_set.contains(entry(0)) &&
+                // discard nodes that have a confirmed direct CFG connection
+                //!found_source_set.contains(entry(0)) && //08.08. CHANGE
                 // check: nodes must be reachable within method in order for method call to be relevant
                 is_part_of_containing_methods_execution(Iterator.single(entry(0))).toSet.contains(entry(0))
             )
             if search_set.size <= 0 then break
+            // keep searching: remaining consequence nodes may be part of *methods* that are called "due to" a source node
 
             //println("\n------------------\nNEW SET OF METHODS\n------------------")
 
@@ -487,44 +488,8 @@ def due_to(cpg: Cpg, sink_nodes: Iterator[? <: AstNode], source_nodes: Iterator[
     })
 
     // print result
-    var counter: Int = 1
-    if print then 
-        if result.toSet.size > 0 then
-            result.toSet.foreach(list => {
-                println(s"Path $counter")
-                list.map(node => node match 
-                    case x: io.shiftleft.codepropertygraph.generated.nodes.Call if sink_set.contains(x) => 
-                        s"        start: ${x.code}" + "\n" +
-                        //s"               |" + "\n" +
-                        s"             ├── call name: ${x.name}" + "\n" +
-                        s"             └── in line: ${x.lineNumber}"
-                    case x if sink_set.contains(x) => 
-                        s"        start: ${x.code}" + "\n" +
-                        //s"               |" + "\n" +
-                        s"             └── in line: ${x.lineNumber}"
-                    case x: io.shiftleft.codepropertygraph.generated.nodes.Call if source_set.contains(x) =>
-                        s"        found: ${x.code}" + "\n" +
-                        //s"               |" + "\n" +
-                        s"             ├── in line: ${x.lineNumber}" + "\n" +
-                        s"             ├──── in method: ${x.method.code}" + "\n" +
-                        s"             └────── in file: ${x.method.filename}"
-                    case x: io.shiftleft.codepropertygraph.generated.nodes.Call if x.isCall => 
-                        s"    called by: ${x.code}" + "\n" +
-                        s"             ├── call name: ${x.name}" + "\n" +
-                        s"             └── in line: ${x.lineNumber}"
-                    case x: io.shiftleft.codepropertygraph.generated.nodes.Method if x.isMethod => 
-                        s"    in method: ${x.code}" + "\n" +
-                        //s"               |" + "\n" +
-                        s"             └── in file: ${x.filename}"
-                    case _ => 
-                        s"        found: ${node.code}"
-                ).foreach(content => println(content))
-                println("")
-                counter += 1
-            })
-        else
-            println("No paths found!")
-
+    if printResults then print_due_to_results(result.toSet, sink_set, source_set)
+    // return result
     result.toSet.iterator
 }
 
@@ -544,6 +509,186 @@ def due_to(cpg: Cpg, sink_nodes: Iterator[? <: AstNode], source_nodes: Iterator[
   * @return 
   *     an `Iterator[List[? <: AstNode]]` collection of paths
   */
-def due_to_is_admin(cpg: Cpg, sink_nodes: Iterator[? <: AstNode], print: Boolean = false)(implicit callResolver: ICallResolver): Iterator[List[? <: AstNode]] = {
-    due_to(cpg, sink_nodes, cpg.call.name("is_admin"), print)
+def due_to_is_admin(cpg: Cpg, sink_nodes: Iterator[? <: AstNode], print: Boolean = false, printResults: Boolean = true)(implicit callResolver: ICallResolver): Iterator[List[? <: AstNode]] = {
+    due_to(cpg, sink_nodes, cpg.call.name("is_admin"), print, printResults)
 }
+
+/**
+  * TODO documentation
+  *
+  * @param result
+  * @param sink_set
+  * @param source_set
+  */
+def print_due_to_results(result: Set[List[? <: AstNode]], sink_set: Set[? <: AstNode], source_set: Set[? <: AstNode]): Unit = {
+    var counter: Int = 1
+    if result.size > 0 then
+        result.foreach(list => {
+            println(s"Path $counter")
+            list.map(node => node match 
+                case x: io.shiftleft.codepropertygraph.generated.nodes.Call if sink_set.contains(x) => 
+                    s"        start: ${x.code}" + "\n" +
+                    //s"               |" + "\n" +
+                    s"             ├── call name: ${x.name}" + "\n" +
+                    s"             └── in line: ${x.lineNumber.getOrElse("N/A")}"
+                case x if sink_set.contains(x) => 
+                    s"        start: ${x.code}" + "\n" +
+                    //s"               |" + "\n" +
+                    s"             └── in line: ${x.lineNumber.getOrElse("N/A")}"
+                case x: io.shiftleft.codepropertygraph.generated.nodes.Call if source_set.contains(x) =>
+                    s"        found: ${x.code}" + "\n" +
+                    //s"               |" + "\n" +
+                    s"             ├── in line: ${x.lineNumber.getOrElse("N/A")}" + "\n" +
+                    s"             ├──── in method: ${x.method.code}" + "\n" +
+                    s"             └────── in file: ${x.method.filename}"
+                case x: io.shiftleft.codepropertygraph.generated.nodes.Call if x.isCall => 
+                    s"    called by: ${x.code}" + "\n" +
+                    s"             ├── call name: ${x.name}" + "\n" +
+                    s"             └── in line: ${x.lineNumber.getOrElse("N/A")}"
+                case x: io.shiftleft.codepropertygraph.generated.nodes.Method if x.isMethod => 
+                    s"    in method: ${x.code}" + "\n" +
+                    //s"               |" + "\n" +
+                    s"             └── in file: ${x.filename}"
+                case _ => 
+                    s"        found: ${node.code}"
+            ).foreach(content => println(content))
+            println("")
+            counter += 1
+        })
+    else
+        println("No paths found!")
+
+}
+
+/* ------------------------------------------------------------------------- */
+/* ---------------------------------- WIP ---------------------------------- */
+/* ------------------------------------------------------------------------- */
+
+def check_paths_for_capability_checks(cpg: Cpg, sink_nodes: Iterator[? <: AstNode], source_nodes: Iterator[? <: AstNode], print: Boolean = false, printResults: Boolean = true)(implicit callResolver: ICallResolver): Unit = {
+    val sink_set = sink_nodes.toSet
+    val source_set = source_nodes.toSet
+
+    println("Getting paths ...")
+    val paths_list = due_to(cpg, sink_set.iterator, source_set.iterator, print, printResults).toSet
+
+    var encountered_checks_implicit: Set[? <: AstNode] = Set()
+    var encountered_checks_explicit: Set[? <: AstNode] = Set()
+    var encountered_capability_strings: Set[? <: AstNode] = Set()
+
+    paths_list.foreach( _.filterNot(node => source_set.contains(node) || node.isMethod || encountered_checks_implicit.contains(node) ).foreach(node => {
+        // check if node is a call that implicitly checks capabilities
+        if (node.isCall && implicit_capability_check_functions_set.contains(node.asInstanceOf[Call].name)) then {
+            encountered_checks_implicit = encountered_checks_implicit ++ Set(node)
+            node.asInstanceOf[Call].argument.isLiteral.typeFullName("string")
+                .filter(y => matches_capability_string.contains(y.code) && !encountered_capability_strings.contains(y))
+                .foreach(y => encountered_capability_strings = encountered_capability_strings ++ Set(y))
+        }
+        // check if node is dominated by an explicit capability check
+        val dominated_by_set = node.isCfgNode.dominatedBy
+        dominated_by_set.isCall
+            .filter(y => is_explicit_capability_check.contains(y.name) && !encountered_checks_explicit.contains(y))
+            .foreach(y => encountered_checks_explicit = encountered_checks_explicit ++ Set(y))
+        dominated_by_set.isLiteral.typeFullName("string")
+            .filter(y => matches_capability_string.contains(y.code) && !encountered_capability_strings.contains(y))
+            .foreach(y => encountered_capability_strings = encountered_capability_strings ++ Set(y))
+    }))
+    if encountered_checks_implicit.size > 0 then
+        println(s"\nEncountered implicit capability checks")
+        encountered_checks_implicit.foreach(y => println(s"    (line ${y.lineNumber.getOrElse("N/A")}) ${y.code}\n        in method: ${y.asInstanceOf[Call].method.code}"))
+    if encountered_checks_explicit.size > 0 then
+        println(s"\nEncountered explicit capability checks")
+        encountered_checks_explicit.foreach(y => println(s"    (line ${y.lineNumber.getOrElse("N/A")}) ${y.code}\n        in method: ${y.asInstanceOf[Call].method.code}"))
+    if encountered_capability_strings.size > 0 then
+        println(s"\nEncountered strings matching capabilities")
+        encountered_capability_strings.foreach(y => println(s"    (line ${y.lineNumber.getOrElse("N/A")}) ${y.code}\n        in method: ${y.asInstanceOf[Literal].method.code}"))   
+}
+
+// incomplete set of WP core functions that take capabilities as an argument for access control purposes
+def implicit_capability_check_functions_set: Set[String] = Set(
+    "add_options_page",
+    "add_submenu_page",
+    "add_menu_page",
+    "add_users_page"
+    // ...
+)
+
+// incomplete set of WP core functions that explictly check user capabilities
+def is_explicit_capability_check: Set[String] = Set(
+    "current_user_can",
+    "user_can",
+    "is_super_admin"
+    // ...
+)
+
+/**
+ * set of default capabilities assignable to users in WP
+ * as listed in https://wordpress.org/documentation/article/roles-and-capabilities/#capabilities
+ */
+def matches_capability_string: Set[String] = Set(
+    "\"switch_themes\"",
+    "\"edit_themes\"",
+    "\"edit_theme_options\"",
+    "\"install_themes\"",
+    "\"activate_plugins\"",
+    "\"edit_plugins\"",
+    "\"install_plugins\"",
+    "\"edit_users\"",
+    "\"edit_files\"",
+    "\"manage_options\"",
+    "\"moderate_comments\"",
+    "\"manage_categories\"",
+    "\"manage_links\"",
+    "\"upload_files\"",
+    "\"import\"",
+    "\"unfiltered_html\"",
+    "\"edit_posts\"",
+    "\"edit_others_posts\"",
+    "\"edit_published_posts\"",
+    "\"publish_posts\"",
+    "\"edit_pages\"",
+    "\"read\"",
+    "\"publish_pages\"",
+    "\"edit_others_pages\"",
+    "\"edit_published_pages\"",
+    "\"delete_pages\"",
+    "\"delete_others_pages\"",
+    "\"delete_published_pages\"",
+    "\"delete_posts\"",
+    "\"delete_others_posts\"",
+    "\"delete_published_posts\"",
+    "\"delete_private_posts\"",
+    "\"edit_private_posts\"",
+    "\"read_private_posts\"",
+    "\"delete_private_pages\"",
+    "\"edit_private_pages\"",
+    "\"read_private_pages\"",
+    "\"delete_users\"",
+    "\"create_users\"",
+    "\"unfiltered_upload\"",
+    "\"edit_dashboard\"",
+    "\"customize\"",
+    "\"delete_site\"",
+    "\"update_plugins\"",
+    "\"delete_plugins\"",
+    "\"update_themes\"",
+    "\"update_core\"",
+    "\"list_users\"",
+    "\"remove_users\"",
+    "\"add_users\"",
+    "\"promote_users\"",
+    "\"delete_themes\"",
+    "\"export\"",
+    "\"edit_comment\"",
+    "\"create_sites\"",
+    "\"delete_sites\"",
+    "\"manage_network\"",
+    "\"manage_sites\"",
+    "\"manage_network_users\"",
+    "\"manage_network_themes\"",
+    "\"manage_network_options\"",
+    "\"manage_network_plugins\"",
+    "\"upload_plugins\"",
+    "\"upload_themes\"",
+    "\"upgrade_network\"",
+    "\"setup_network\""
+)
