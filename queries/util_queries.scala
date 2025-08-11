@@ -568,6 +568,32 @@ def check_paths_for_capability_checks(cpg: Cpg, sink_nodes: Iterator[? <: AstNod
     val sink_set = sink_nodes.toSet
     val source_set = source_nodes.toSet
 
+    /* incomplete set of WP core functions that take capabilities as an argument for access control purposes */
+    val implicit_capability_check_functions_set: Set[String] = Set("add_options_page", "add_submenu_page", "add_menu_page", "add_users_page") // ...
+    /* incomplete set of WP core functions that explictly check user capabilities */
+    val explicit_capability_check_functions_set: Set[String] = Set("current_user_can", "user_can", "is_super_admin") // ...
+    /* set of default capabilities assignable to users in WP as listed in https://wordpress.org/documentation/article/roles-and-capabilities/#capabilities */
+    val matches_capability_string: Set[String] = Set(
+        "\"switch_themes\"", "\"edit_themes\"", "\"edit_theme_options\"", "\"install_themes\"",
+        "\"activate_plugins\"", "\"edit_plugins\"", "\"install_plugins\"", "\"edit_users\"",
+        "\"edit_files\"", "\"manage_options\"", "\"moderate_comments\"", "\"manage_categories\"",
+        "\"manage_links\"", "\"upload_files\"", "\"import\"", "\"unfiltered_html\"",
+        "\"edit_posts\"", "\"edit_others_posts\"", "\"edit_published_posts\"", "\"publish_posts\"",
+        "\"edit_pages\"", "\"read\"", "\"publish_pages\"", "\"edit_others_pages\"",
+        "\"edit_published_pages\"", "\"delete_pages\"", "\"delete_others_pages\"",
+        "\"delete_published_pages\"", "\"delete_posts\"", "\"delete_others_posts\"",
+        "\"delete_published_posts\"", "\"delete_private_posts\"", "\"edit_private_posts\"",
+        "\"read_private_posts\"", "\"delete_private_pages\"", "\"edit_private_pages\"",
+        "\"read_private_pages\"", "\"delete_users\"", "\"create_users\"", "\"unfiltered_upload\"",
+        "\"edit_dashboard\"", "\"customize\"", "\"delete_site\"", "\"update_plugins\"",
+        "\"delete_plugins\"", "\"update_themes\"", "\"update_core\"", "\"list_users\"",
+        "\"remove_users\"", "\"add_users\"", "\"promote_users\"", "\"delete_themes\"",
+        "\"export\"", "\"edit_comment\"", "\"create_sites\"", "\"delete_sites\"",
+        "\"manage_network\"", "\"manage_sites\"", "\"manage_network_users\"",
+        "\"manage_network_themes\"", "\"manage_network_options\"", "\"manage_network_plugins\"",
+        "\"upload_plugins\"", "\"upload_themes\"", "\"upgrade_network\"", "\"setup_network\""
+    )
+
     println("Getting paths ...")
     val paths_list = due_to(cpg, sink_set.iterator, source_set.iterator, print, printResults).toSet
 
@@ -602,93 +628,3 @@ def check_paths_for_capability_checks(cpg: Cpg, sink_nodes: Iterator[? <: AstNod
         println(s"\nEncountered strings matching capabilities")
         encountered_capability_strings.foreach(y => println(s"    (line ${y.lineNumber.getOrElse("N/A")}) ${y.code}\n        in method: ${y.asInstanceOf[Literal].method.code}"))   
 }
-
-// incomplete set of WP core functions that take capabilities as an argument for access control purposes
-def implicit_capability_check_functions_set: Set[String] = Set(
-    "add_options_page",
-    "add_submenu_page",
-    "add_menu_page",
-    "add_users_page"
-    // ...
-)
-
-// incomplete set of WP core functions that explictly check user capabilities
-def explicit_capability_check_functions_set: Set[String] = Set(
-    "current_user_can",
-    "user_can",
-    "is_super_admin"
-    // ...
-)
-
-/**
- * set of default capabilities assignable to users in WP
- * as listed in https://wordpress.org/documentation/article/roles-and-capabilities/#capabilities
- */
-def matches_capability_string: Set[String] = Set(
-    "\"switch_themes\"",
-    "\"edit_themes\"",
-    "\"edit_theme_options\"",
-    "\"install_themes\"",
-    "\"activate_plugins\"",
-    "\"edit_plugins\"",
-    "\"install_plugins\"",
-    "\"edit_users\"",
-    "\"edit_files\"",
-    "\"manage_options\"",
-    "\"moderate_comments\"",
-    "\"manage_categories\"",
-    "\"manage_links\"",
-    "\"upload_files\"",
-    "\"import\"",
-    "\"unfiltered_html\"",
-    "\"edit_posts\"",
-    "\"edit_others_posts\"",
-    "\"edit_published_posts\"",
-    "\"publish_posts\"",
-    "\"edit_pages\"",
-    "\"read\"",
-    "\"publish_pages\"",
-    "\"edit_others_pages\"",
-    "\"edit_published_pages\"",
-    "\"delete_pages\"",
-    "\"delete_others_pages\"",
-    "\"delete_published_pages\"",
-    "\"delete_posts\"",
-    "\"delete_others_posts\"",
-    "\"delete_published_posts\"",
-    "\"delete_private_posts\"",
-    "\"edit_private_posts\"",
-    "\"read_private_posts\"",
-    "\"delete_private_pages\"",
-    "\"edit_private_pages\"",
-    "\"read_private_pages\"",
-    "\"delete_users\"",
-    "\"create_users\"",
-    "\"unfiltered_upload\"",
-    "\"edit_dashboard\"",
-    "\"customize\"",
-    "\"delete_site\"",
-    "\"update_plugins\"",
-    "\"delete_plugins\"",
-    "\"update_themes\"",
-    "\"update_core\"",
-    "\"list_users\"",
-    "\"remove_users\"",
-    "\"add_users\"",
-    "\"promote_users\"",
-    "\"delete_themes\"",
-    "\"export\"",
-    "\"edit_comment\"",
-    "\"create_sites\"",
-    "\"delete_sites\"",
-    "\"manage_network\"",
-    "\"manage_sites\"",
-    "\"manage_network_users\"",
-    "\"manage_network_themes\"",
-    "\"manage_network_options\"",
-    "\"manage_network_plugins\"",
-    "\"upload_plugins\"",
-    "\"upload_themes\"",
-    "\"upgrade_network\"",
-    "\"setup_network\""
-)
