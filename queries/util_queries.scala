@@ -569,9 +569,9 @@ def check_paths_for_capability_checks(cpg: Cpg, sink_nodes: Iterator[? <: AstNod
     val source_set = source_nodes.toSet
 
     /* incomplete set of WP core functions that take capabilities as an argument for access control purposes */
-    val implicit_capability_check_functions_set: Set[String] = Set("add_options_page", "add_submenu_page", "add_menu_page", "add_users_page") // ...
-    /* incomplete set of WP core functions that explictly check user capabilities */
-    val explicit_capability_check_functions_set: Set[String] = Set("current_user_can", "user_can", "is_super_admin") // ...
+    val indirect_capability_check_functions_set: Set[String] = Set("add_options_page", "add_submenu_page", "add_menu_page", "add_users_page") // ...
+    /* incomplete set of WP core functions that directly check user capabilities */
+    val direct_capability_check_functions_set: Set[String] = Set("current_user_can", "user_can", "is_super_admin") // ...
     /* set of default capabilities assignable to users in WP as listed in https://wordpress.org/documentation/article/roles-and-capabilities/#capabilities */
     val matches_capability_string: Set[String] = Set(
         "\"switch_themes\"", "\"edit_themes\"", "\"edit_theme_options\"", "\"install_themes\"",
@@ -597,33 +597,33 @@ def check_paths_for_capability_checks(cpg: Cpg, sink_nodes: Iterator[? <: AstNod
     println("Getting paths ...")
     val paths_list = due_to(cpg, sink_set.iterator, source_set.iterator, print, printResults).toSet
 
-    var encountered_checks_implicit: Set[? <: AstNode] = Set()
-    var encountered_checks_explicit: Set[? <: AstNode] = Set()
+    var encountered_checks_indirect: Set[? <: AstNode] = Set()
+    var encountered_checks_direct: Set[? <: AstNode] = Set()
     var encountered_capability_strings: Set[? <: AstNode] = Set()
 
-    paths_list.foreach( _.filterNot(node => source_set.contains(node) || node.isMethod || encountered_checks_implicit.contains(node) ).foreach(node => {
-        // check if node is a call that implicitly checks capabilities
-        if (node.isCall && implicit_capability_check_functions_set.contains(node.asInstanceOf[Call].name)) then {
-            encountered_checks_implicit = encountered_checks_implicit ++ Set(node)
+    paths_list.foreach( _.filterNot(node => source_set.contains(node) || node.isMethod || encountered_checks_indirect.contains(node) ).foreach(node => {
+        // check if node is a call that indirectly checks capabilities
+        if (node.isCall && indirect_capability_check_functions_set.contains(node.asInstanceOf[Call].name)) then {
+            encountered_checks_indirect = encountered_checks_indirect ++ Set(node)
             node.asInstanceOf[Call].argument.isLiteral.typeFullName("string")
                 .filter(y => matches_capability_string.contains(y.code) && !encountered_capability_strings.contains(y))
                 .foreach(y => encountered_capability_strings = encountered_capability_strings ++ Set(y))
         }
-        // check if node is dominated by an explicit capability check
+        // check if node is dominated by an direct capability check
         val dominated_by_set = node.isCfgNode.dominatedBy
         dominated_by_set.isCall
-            .filter(y => explicit_capability_check_functions_set.contains(y.name) && !encountered_checks_explicit.contains(y))
-            .foreach(y => encountered_checks_explicit = encountered_checks_explicit ++ Set(y))
+            .filter(y => direct_capability_check_functions_set.contains(y.name) && !encountered_checks_direct.contains(y))
+            .foreach(y => encountered_checks_direct = encountered_checks_direct ++ Set(y))
         dominated_by_set.isLiteral.typeFullName("string")
             .filter(y => matches_capability_string.contains(y.code) && !encountered_capability_strings.contains(y))
             .foreach(y => encountered_capability_strings = encountered_capability_strings ++ Set(y))
     }))
-    if encountered_checks_implicit.size > 0 then
-        println(s"\nEncountered implicit capability checks")
-        encountered_checks_implicit.foreach(y => println(s"    (line ${y.lineNumber.getOrElse("N/A")}) ${y.code}\n        in method: ${y.asInstanceOf[Call].method.code}"))
-    if encountered_checks_explicit.size > 0 then
-        println(s"\nEncountered explicit capability checks")
-        encountered_checks_explicit.foreach(y => println(s"    (line ${y.lineNumber.getOrElse("N/A")}) ${y.code}\n        in method: ${y.asInstanceOf[Call].method.code}"))
+    if encountered_checks_indirect.size > 0 then
+        println(s"\nEncountered indirect capability checks")
+        encountered_checks_indirect.foreach(y => println(s"    (line ${y.lineNumber.getOrElse("N/A")}) ${y.code}\n        in method: ${y.asInstanceOf[Call].method.code}"))
+    if encountered_checks_direct.size > 0 then
+        println(s"\nEncountered direct capability checks")
+        encountered_checks_direct.foreach(y => println(s"    (line ${y.lineNumber.getOrElse("N/A")}) ${y.code}\n        in method: ${y.asInstanceOf[Call].method.code}"))
     if encountered_capability_strings.size > 0 then
         println(s"\nEncountered strings matching capabilities")
         encountered_capability_strings.foreach(y => println(s"    (line ${y.lineNumber.getOrElse("N/A")}) ${y.code}\n        in method: ${y.asInstanceOf[Literal].method.code}"))   
