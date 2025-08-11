@@ -14,7 +14,7 @@ SINKS
 includes/page-admin-counters.php:111:15
 └── `submit_button()` submits form with unsanitised input
 */
-def plugin_00 = List(
+def plugin_0 = List(
     due_to_is_admin(cpg, cpg.call.name("submit_button")),
     check_paths_for_capability_checks(cpg, cpg.call.name("submit_button"), cpg.call.name("is_admin"))
 )
@@ -30,7 +30,7 @@ Joern's php2cpg does not parse `*.html` files.
     Thus, the actual sink cannot be queried.
     Instead, attempt to find any calls referencing `principal.html` and use those as sinks.
 */
-def plugin_01 = List(
+def plugin_1 = List(
     due_to_is_admin(cpg, cpg.call.filter(_.code.contains("principal.html"))),
     check_paths_for_capability_checks(cpg, cpg.call.filter(_.code.contains("principal.html")), cpg.call.name("is_admin"))
 )
@@ -48,7 +48,7 @@ includes/DataAccess.php
 ADJUSTMENTS
 Didn't bother to follow data-flow to ensure that the calls are related.
 */
-def plugin_02 = List(
+def plugin_2a = List(
     //due_to(cpg, cpg.call.name("get_results"), cpg.call.name("is_admin")),
     due_to(cpg, cpg.call.name("get_results"), get_calls_for_methods(cpg, cpg.method.name("getRedirectsForViewQuery"))),
     due_to_is_admin(cpg, get_calls_for_methods(cpg, cpg.method.name("getRedirectsForViewQuery"))),
@@ -64,7 +64,7 @@ includes/DataAccess.php
     └── due to call of `ABJ_404_Solution_DataAccess::getLogRecords`
         └── SQL request with unsanitised data
 */
-def plugin_03 = List(
+def plugin_2b = List(
     //due_to(cpg, cpg.call.name("get_results"), cpg.call.name("is_admin")),
     due_to(cpg, cpg.call.name("get_results"), get_calls_for_methods(cpg, cpg.method.name("getLogRecords"))),
     due_to_is_admin(cpg, get_calls_for_methods(cpg, cpg.method.name("getLogRecords")))
@@ -98,7 +98,7 @@ Relevant `is_admin`-check is added to action hook.
     Thus, we cannot use the queries (as they are now available) to say whether the call is connected
     Instead, we rely on the fact that manual investigation of the vulnerability identified it as a key element
 */
-def plugin_04 = List(
+def plugin_3a = List(
     //due_to_is_admin(cpg, cpg.call.filter(_.code.contains("savePagebuilderSettings"))),
     //due_to_is_admin(cpg, cpg.call.filter(_.code.contains("Enter HTML in Body (beginning of body tag)"))),
     due_to(cpg, cpg.call.filter(_.code.contains("savePagebuilderSettings")), get_calls_for_methods(cpg, cpg.method.name("ampforwp_include_options_file"))),
@@ -114,7 +114,7 @@ ADJUSTMENTS - same as above
 NOTES
 They tried to fix the vulnerability in the previous version by simply deleting `<script>` tags, which was quite easy to circumvent.
 */
-def plugin_05 = List(
+def plugin_3b = List(
     //due_to_is_admin(cpg, cpg.call.filter(_.code.contains("savePagebuilderSettings"))),
     //due_to_is_admin(cpg, cpg.call.filter(_.code.contains("Enter HTML in Body (beginning of body tag)"))),
     due_to(cpg, cpg.call.filter(_.code.contains("savePagebuilderSettings")), get_calls_for_methods(cpg, cpg.method.name("ampforwp_include_options_file"))),
@@ -128,7 +128,7 @@ SINKS
 Includes/Settings.php:100
 └── input element with `id="accordions_or_faqs_license_key"`
 */
-def plugin_06 = List(
+def plugin_4 = List(
     due_to_is_admin(cpg, cpg.call.name("echo").filter(_.code.contains("accordions_or_faqs_license_key"))),
     check_paths_for_capability_checks(cpg, cpg.call.name("echo").filter(_.code.contains("accordions_or_faqs_license_key")), cpg.call.name("is_admin"))
 )
@@ -151,7 +151,7 @@ The file inclusions are dynamically generated from arguments.
     Thus, we cannot use the queries (as they are now available) to determine where the files are included.
     Instead, we rely on the fact that manual investigation of the vulnerability identified the inclusions via `ACOPLW_Backend::view` as relevant.
 */
-def plugin_07 = List(
+def plugin_5 = List(
     due_to_is_admin(cpg, get_calls_for_methods(cpg, cpg.method.fullName("ACOPLW_Backend<metaclass>.view"))),
     check_paths_for_capability_checks(cpg, get_calls_for_methods(cpg, cpg.method.fullName("ACOPLW_Backend<metaclass>.view")), cpg.call.name("is_admin"))
 )
@@ -163,7 +163,7 @@ SINKS
 addtoany.admin.php
 └── submit button (line 874) submits form with unsanitised input (line 569)
 */
-def plugin_08 = List(
+def plugin_6a = List(
     due_to_is_admin(cpg, cpg.call.name("echo").filter(_.code.contains("A2A_SHARE_SAVE_header"))),
     due_to_is_admin(cpg, cpg.call.name("echo").filter(_.code.contains("""<input class=\"button-primary\" type=\"submit\" name=\"Submit\" value=\""""))),
     check_paths_for_capability_checks(cpg, cpg.call.name("echo").filter(_.code.contains("A2A_SHARE_SAVE_header")), cpg.call.name("is_admin")),
@@ -176,7 +176,7 @@ SINKS
 addtoany.admin.php
 └── submit button (line 874) submits form with unsanitised input (line 563)
 */
-def plugin_09 = List(
+def plugin_6b = List(
     due_to_is_admin(cpg, cpg.call.name("echo").filter(_.code.contains("A2A_SHARE_SAVE_button_custom"))),
     due_to_is_admin(cpg, cpg.call.name("echo").filter(_.code.contains("""<input class=\"button-primary\" type=\"submit\" name=\"Submit\" value=\""""))),
     check_paths_for_capability_checks(cpg, cpg.call.name("echo").filter(_.code.contains("A2A_SHARE_SAVE_button_custom")), cpg.call.name("is_admin")),
@@ -189,7 +189,7 @@ SINKS
 addtofeedly.php
 └── `submit_button()` (line 80) submits form with unsanitised input (line 55)
 */
-def plugin_10 = List(
+def plugin_7 = List(
     due_to_is_admin(cpg, cpg.call.name("submit_button")),
     check_paths_for_capability_checks(cpg, cpg.call.name("submit_button"), cpg.call.name("is_admin"))
 )
@@ -200,7 +200,7 @@ SINKS
 admin/settings.php:335
 └── uses `sanitize_text_field()` to set content of `value` attribute
 */
-def plugin_11 = List(
+def plugin_8 = List(
     due_to_is_admin(cpg, cpg.call.name("sanitize_text_field")),
     check_paths_for_capability_checks(cpg, cpg.call.name("sanitize_text_field"), cpg.call.name("is_admin"))
 )
@@ -213,7 +213,7 @@ ui-tab-main.php
 └── combined with ad-injection-admin.php
     └── `_e`-calls with `Save all settings` submit forms with unsanitised input (ui-tab-main.php:430)
 */
-def plugin_12 = List(
+def plugin_9 = List(
     due_to_is_admin(cpg, cpg.call.name("echo").filter(_.code.contains("""<textarea name=\"ad_code_top_1\""""))),
     due_to_is_admin(cpg, cpg.call.name("_e").filter(_.code.contains("Save all settings"))),
     check_paths_for_capability_checks(cpg, cpg.call.name("echo").filter(_.code.contains("""<textarea name=\"ad_code_top_1\"""")), cpg.call.name("is_admin")),
