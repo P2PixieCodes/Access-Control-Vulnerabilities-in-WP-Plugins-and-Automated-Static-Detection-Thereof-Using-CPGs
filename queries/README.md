@@ -1,3 +1,0 @@
-# Queries and Scripts
-
-#TODO

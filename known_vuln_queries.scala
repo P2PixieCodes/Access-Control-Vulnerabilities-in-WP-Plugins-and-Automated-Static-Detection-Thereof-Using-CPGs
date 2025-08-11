@@ -46,7 +46,8 @@ includes/DataAccess.php
         └── SQL request with unsanitised data
 
 ADJUSTMENTS
-Didn't bother to follow data-flow to ensure that the calls are related.
+Split into 2 queries to ensure the path includes calls to the problematic method.
+    Didn't bother to follow data-flow to ensure that the calls are related.
 */
 def plugin_2a = List(
     //due_to(cpg, cpg.call.name("get_results"), cpg.call.name("is_admin")),
@@ -63,6 +64,10 @@ includes/DataAccess.php
 └── any call of `$wpdb->get_results`
     └── due to call of `ABJ_404_Solution_DataAccess::getLogRecords`
         └── SQL request with unsanitised data
+
+ADJUSTMENTS
+Split into 2 queries to ensure the path includes calls to the problematic method.
+    Didn't bother to follow data-flow to ensure that the calls are related.
 */
 def plugin_2b = List(
     //due_to(cpg, cpg.call.name("get_results"), cpg.call.name("is_admin")),
