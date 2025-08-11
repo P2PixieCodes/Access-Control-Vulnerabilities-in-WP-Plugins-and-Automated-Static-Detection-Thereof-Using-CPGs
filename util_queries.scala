@@ -26,7 +26,6 @@ import flatgraph.traversal.*
 def get_calls_for_methods(cpg: Cpg, methods: Iterator[Method])(implicit callResolver: ICallResolver): Iterator[Call] = {
     val method_nodes = methods.toSet
        get_inclusion_calls(cpg, method_nodes) // global file functions
-    ++ get_calls_via_variable_assignment(cpg, method_nodes) // anonymous functions
     ++ get_calls_via_callbacks(cpg, method_nodes) // regular functions
     ++ method_nodes.callIn // regular functions
     ++ get_object_method_calls(cpg, method_nodes) // attempt to find unresolved function calls
@@ -65,15 +64,6 @@ def get_self_construct_call(cpg: Cpg, methods: Iterator[Method]): Iterator[Call]
   *     an `Iterator[Call]` with matching calls
   */
 def get_object_method_calls(cpg: Cpg, methods: Iterator[Method]): Iterator[Call] = {
-    /* // PRINT STUFF FOR DEVS
-    val method_set_print = methods.toSet
-    println("\nMETHODS")
-    method_set_print.foreach(node => println(s"    ${node.fullName}\n    ---- ${node.code}"))
-    println("\nCALLS MATCHING FIRST CONDITION")
-    cpg.call.filter(call => method_set_print.exists(method => call.code.contains(s"->${method.name}"))).foreach(call => println(s"    `${call.code}` calls ${call.methodFullName} in line ${call.lineNumber}\n    ---- in method: ${call.method.fullName}"))
-    println("\nCALLS MATCHING SECOND CONDITION")
-    cpg.call.filter(call => method_set_print.exists(method => call.code.contains(s"->${method.name}") && call.methodFullName.endsWith(method.name))).foreach(call => println(s"    `${call.code}` calls ${call.methodFullName} in line ${call.lineNumber}\n    ---- in method: ${call.method.fullName}"))
-    */
     val method_set = methods.toSet
     cpg.call.filter(call => 
         method_set.exists(method => 
@@ -107,24 +97,7 @@ def get_inclusion_calls(cpg: Cpg, methods: Iterator[Method]): Iterator[Call] = {
             || node.code.contains(method_node.filename.substring(method_node.filename.lastIndexOf("/")+1)) // case where the filename without path is passed -> might return some false positives
         })
     )
-    // TODO: case where the filename/path is dynamically constructed
     relevant_file_calls
-}
-
-/**
-  * Given a filename, get the file's `<global>` method.
-  *
-  * @param cpg
-  *     the CPG instance
-  * @param file_name
-  *     the given filename as a `String`
-  * @return
-  *     an `Iterator[Method]` with the corresponding `<global>` file method;
-  *     if there is no file with that name, the iterator is empty
-  */
-def get_entry_method(cpg: Cpg, file_name: String): Iterator[Method] = {
-    cpg.file.name(file_name).namespaceBlock.typeDecl.method
-    //cpg.method.fullName(file_name + ":<global>")
 }
 
 /**
@@ -311,42 +284,6 @@ def get_calls_via_callbacks(cpg: Cpg, methods: Iterator[Method]): Iterator[Call]
 }
 
 /**
-  * (INCOMPLETE)
-  * 
-  * Given a collection of `<lambda>` methods (which were defined via anonymous function variable assignment), attempt to get all calls thereof.
-  *
-  * @param cpg
-  *     the CPG instance
-  * @param methods
-  *     an `Iterator[Method]` of anonymous functions
-  * @return
-  *     an `Iterator[Call]` which contains calls to relevant anonymous functions
-  */
-def get_calls_via_variable_assignment(cpg: Cpg, methods: Iterator[Method]): Iterator[Call | Nothing] = {
-    // TODO
-    return Iterator()
-}
-
-/**
-  * Filter the given nodes for those that are part of a condition (for either a control structure or an inline if-statement).
-  *
-  * @param cpg
-  *     the CPG instance
-  * @param relevant_nodes
-  *     an `Iterator[? <: AstNode]`
-  * @return
-  *     an `Iterator[? <: AstNode]` which contains only those that are part of a condition
-  */
-def is_part_of_condition(cpg: Cpg, relevant_nodes: Iterator[? <: AstNode]): Iterator[? <: AstNode] = {
-    val compareSet = relevant_nodes.toSet
-
-    cpg.controlStructure.condition.ast.filter(node => compareSet contains node)
-    ++ cpg.call.name("<operator>.conditional").argument(1).filter(node => !node.cfgNext.equals(node._argumentIn)).ast.filter(node => compareSet contains node)
-    // if there are other possibilities
-    //++ <query>
-}
-
-/**
   * Find control flow paths by which execution of any source node may lead to execution of any sink node.
   * 
   * (Note: this does not evaluate expressions)
@@ -435,8 +372,6 @@ def due_to(cpg: Cpg, sink_nodes: Iterator[? <: AstNode], source_nodes: Iterator[
             if search_set.size <= 0 then break
             // keep searching: remaining consequence nodes may be part of *methods* that are called "due to" a source node
 
-            //println("\n------------------\nNEW SET OF METHODS\n------------------")
-
             // SEARCH for call nodes
             search_set.foreach((x,prevPath) => {
                 if print then
@@ -514,7 +449,7 @@ def due_to_is_admin(cpg: Cpg, sink_nodes: Iterator[? <: AstNode], print: Boolean
 }
 
 /**
-  * TODO documentation
+  * To be called by `due_to` to print the final results.
   *
   * @param result
   * @param sink_set
@@ -560,10 +495,17 @@ def print_due_to_results(result: Set[List[? <: AstNode]], sink_set: Set[? <: Ast
 
 }
 
-/* ------------------------------------------------------------------------- */
-/* ---------------------------------- WIP ---------------------------------- */
-/* ------------------------------------------------------------------------- */
-
+/**
+  * For the control flow paths by which execution of any source node may lead to execution of any sink node, 
+  * check the directly connected dominators for code potentially containing capability checks.
+  *
+  * @param cpg
+  * @param sink_nodes
+  * @param source_nodes
+  * @param print
+  * @param printResults
+  * @param callResolver
+  */
 def check_paths_for_capability_checks(cpg: Cpg, sink_nodes: Iterator[? <: AstNode], source_nodes: Iterator[? <: AstNode], print: Boolean = false, printResults: Boolean = true)(implicit callResolver: ICallResolver): Unit = {
     val sink_set = sink_nodes.toSet
     val source_set = source_nodes.toSet
