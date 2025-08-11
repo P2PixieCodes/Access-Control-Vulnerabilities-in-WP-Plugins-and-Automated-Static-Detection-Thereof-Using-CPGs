@@ -586,7 +586,7 @@ def check_paths_for_capability_checks(cpg: Cpg, sink_nodes: Iterator[? <: AstNod
         // check if node is dominated by an explicit capability check
         val dominated_by_set = node.isCfgNode.dominatedBy
         dominated_by_set.isCall
-            .filter(y => is_explicit_capability_check.contains(y.name) && !encountered_checks_explicit.contains(y))
+            .filter(y => explicit_capability_check_functions_set.contains(y.name) && !encountered_checks_explicit.contains(y))
             .foreach(y => encountered_checks_explicit = encountered_checks_explicit ++ Set(y))
         dominated_by_set.isLiteral.typeFullName("string")
             .filter(y => matches_capability_string.contains(y.code) && !encountered_capability_strings.contains(y))
@@ -613,7 +613,7 @@ def implicit_capability_check_functions_set: Set[String] = Set(
 )
 
 // incomplete set of WP core functions that explictly check user capabilities
-def is_explicit_capability_check: Set[String] = Set(
+def explicit_capability_check_functions_set: Set[String] = Set(
     "current_user_can",
     "user_can",
     "is_super_admin"
